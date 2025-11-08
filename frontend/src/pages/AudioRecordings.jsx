@@ -124,11 +124,21 @@ function AudioRecordings() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1>Audio Recordings</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h1>Voice Recordings</h1>
+          <p style={{
+            fontSize: '1.1rem',
+            color: 'var(--text-secondary)',
+            marginTop: '-1rem',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+          }}>
+            Capture your voice and stories for future generations
+          </p>
+        </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
-          <label className="btn btn-secondary">
-            Upload Audio File
+          <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
+            + Upload Audio
             <input
               type="file"
               accept="audio/*"
@@ -140,7 +150,7 @@ function AudioRecordings() {
       </div>
 
       <div className="container">
-        <h2>Record New Audio</h2>
+        <h2 style={{ marginBottom: '1.5rem' }}>Record New Audio</h2>
         <div className="recording-controls">
           {!isRecording && !audioBlob && (
             <button onClick={startRecording} className="btn btn-primary">
@@ -176,29 +186,45 @@ function AudioRecordings() {
         </div>
       </div>
 
-      <div className="container">
-        <h2>Your Recordings</h2>
+      <div style={{ marginTop: '3rem' }}>
+        <h2 style={{ marginBottom: '1.5rem' }}>Your Recordings</h2>
         {recordings.length === 0 ? (
-          <p>No recordings yet. Record or upload your first audio!</p>
+          <div className="container" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+            <p style={{
+              fontSize: '1.2rem',
+              color: 'var(--text-secondary)',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+            }}>
+              No recordings yet. Record or upload your first audio to get started!
+            </p>
+          </div>
         ) : (
-          <div className="recordings-list">
+          <div className="grid grid-2">
             {recordings.map((recording) => (
-              <div key={recording.id} className="recording-item card">
-                <div style={{ flex: 1 }}>
-                  <h3>{recording.title || 'Untitled Recording'}</h3>
-                  <p style={{ color: '#666', marginBottom: '0.5rem' }}>
-                    {format(new Date(recording.created_at), 'MMMM d, yyyy')}
-                  </p>
-                  {recording.description && (
-                    <p style={{ marginBottom: '0.5rem' }}>{recording.description}</p>
-                  )}
-                  <audio
-                    controls
-                    src={`http://localhost:8000/api/audio/${recording.id}`}
-                    onPlay={() => setCurrentPlaying(recording.id)}
-                    onPause={() => setCurrentPlaying(null)}
-                  />
-                </div>
+              <div key={recording.id} className="card">
+                <h3 style={{ marginBottom: '0.75rem' }}>{recording.title || 'Untitled Recording'}</h3>
+                <p style={{
+                  color: 'var(--text-muted)',
+                  marginBottom: '1.25rem',
+                  fontSize: '0.9rem',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+                }}>
+                  {format(new Date(recording.created_at), 'MMMM d, yyyy')}
+                </p>
+                {recording.description && (
+                  <p style={{
+                    marginBottom: '1rem',
+                    color: 'var(--text-secondary)',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+                  }}>{recording.description}</p>
+                )}
+                <audio
+                  controls
+                  src={`http://localhost:8000/api/audio/${recording.id}`}
+                  onPlay={() => setCurrentPlaying(recording.id)}
+                  onPause={() => setCurrentPlaying(null)}
+                  style={{ width: '100%', marginTop: '1rem' }}
+                />
               </div>
             ))}
           </div>

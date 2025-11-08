@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir /s \"c:\\Users\\bglad\\OneDrive\\Desktop\\Code\\Personal\\GladneyFamilyTree\")",
+      "Bash(python run.py:*)",
+      "Bash(pip install:*)",
+      "Bash(npm run dev:*)",
+      "Bash(pip uninstall:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

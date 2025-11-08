@@ -69,19 +69,37 @@ function PhotoGallery() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1>Photo Gallery</h1>
-        <div style={{ display: 'flex', gap: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h1>Photo Gallery</h1>
+          <p style={{
+            fontSize: '1.1rem',
+            color: 'var(--text-secondary)',
+            marginTop: '-1rem',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+          }}>
+            A visual journey through your family memories
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
           <select
             value={viewMode}
             onChange={(e) => setViewMode(e.target.value)}
-            className="form-group select"
+            style={{
+              padding: '0.75rem 1rem',
+              borderRadius: '10px',
+              border: '2px solid var(--border)',
+              backgroundColor: 'var(--surface)',
+              color: 'var(--text-primary)',
+              fontSize: '1rem',
+              cursor: 'pointer'
+            }}
           >
             <option value="grid">Grid View</option>
             <option value="chronological">Chronological</option>
           </select>
-          <label className="btn btn-primary">
-            Upload Photos
+          <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
+            + Upload Photos
             <input
               type="file"
               multiple
@@ -94,8 +112,25 @@ function PhotoGallery() {
       </div>
 
       {photos.length === 0 ? (
-        <div className="container">
-          <p>No photos yet. Upload your first photo to get started!</p>
+        <div className="container" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+          <p style={{
+            fontSize: '1.2rem',
+            color: 'var(--text-secondary)',
+            marginBottom: '2rem',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+          }}>
+            No photos yet. Upload your first photo to start building your family gallery!
+          </p>
+          <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
+            Upload Photos
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleFileUpload}
+              style={{ display: 'none' }}
+            />
+          </label>
         </div>
       ) : (
         <div className={viewMode === 'grid' ? 'photo-grid' : 'photo-chronological'}>
@@ -116,20 +151,35 @@ function PhotoGallery() {
 
       {selectedPhoto && (
         <div className="modal" onClick={() => setSelectedPhoto(null)}>
-          <div className="modal-content photo-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content photo-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '1000px' }}>
             <div className="modal-header">
-              <h2>{selectedPhoto.title || 'Photo'}</h2>
+              <h2 style={{ color: 'var(--primary)' }}>{selectedPhoto.title || 'Photo'}</h2>
               <button className="close-btn" onClick={() => setSelectedPhoto(null)}>×</button>
             </div>
             <img
               src={`http://localhost:8000/api/photos/${selectedPhoto.id}`}
               alt={selectedPhoto.title || 'Photo'}
-              style={{ maxWidth: '100%', height: 'auto' }}
+              style={{
+                maxWidth: '100%',
+                height: 'auto',
+                borderRadius: '12px',
+                boxShadow: '0 4px 20px var(--shadow)'
+              }}
             />
             {selectedPhoto.description && (
-              <p style={{ marginTop: '1rem' }}>{selectedPhoto.description}</p>
+              <p style={{
+                marginTop: '1.5rem',
+                color: 'var(--text-secondary)',
+                lineHeight: '1.7',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+              }}>{selectedPhoto.description}</p>
             )}
-            <p style={{ color: '#666', marginTop: '0.5rem' }}>
+            <p style={{
+              color: 'var(--text-muted)',
+              marginTop: '1rem',
+              fontSize: '0.9rem',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+            }}>
               Uploaded: {format(new Date(selectedPhoto.created_at), 'MMMM d, yyyy')}
             </p>
           </div>

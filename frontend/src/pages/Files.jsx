@@ -61,10 +61,20 @@ function Files() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1>Files (Odds and Ends)</h1>
-        <label className="btn btn-primary">
-          Upload Files
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h1>Documents & Files</h1>
+          <p style={{
+            fontSize: '1.1rem',
+            color: 'var(--text-secondary)',
+            marginTop: '-1rem',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+          }}>
+            Store important documents and family treasures
+          </p>
+        </div>
+        <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
+          + Upload Files
           <input
             type="file"
             multiple
@@ -75,27 +85,58 @@ function Files() {
       </div>
 
       {files.length === 0 ? (
-        <div className="container">
-          <p>No files yet. Upload your first file to get started!</p>
+        <div className="container" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+          <p style={{
+            fontSize: '1.2rem',
+            color: 'var(--text-secondary)',
+            marginBottom: '2rem',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+          }}>
+            No files yet. Upload your first document to get started!
+          </p>
+          <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
+            Upload Files
+            <input
+              type="file"
+              multiple
+              onChange={handleFileUpload}
+              style={{ display: 'none' }}
+            />
+          </label>
         </div>
       ) : (
         <div className="grid grid-3">
           {files.map((file) => (
-            <div key={file.id} className="card">
-              <div style={{ fontSize: '3rem', textAlign: 'center', marginBottom: '1rem' }}>
+            <div key={file.id} className="card" style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>
                 {getFileIcon(file.file_type)}
               </div>
-              <h3>{file.title || file.filename}</h3>
-              <p style={{ color: '#666', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+              <h3 style={{ marginBottom: '0.75rem', fontSize: '1.25rem' }}>{file.title || file.filename}</h3>
+              <p style={{
+                color: 'var(--text-muted)',
+                marginBottom: '0.75rem',
+                fontSize: '0.9rem',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+              }}>
                 {format(new Date(file.created_at), 'MMMM d, yyyy')}
               </p>
               {file.description && (
-                <p style={{ marginBottom: '1rem', fontSize: '0.9rem' }}>
+                <p style={{
+                  marginBottom: '1rem',
+                  fontSize: '0.9rem',
+                  color: 'var(--text-secondary)',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+                }}>
                   {file.description}
                 </p>
               )}
-              <p style={{ color: '#999', fontSize: '0.8rem', marginBottom: '1rem' }}>
-                Type: {file.file_type || 'Unknown'}
+              <p style={{
+                color: 'var(--text-muted)',
+                fontSize: '0.8rem',
+                marginBottom: '1.25rem',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+              }}>
+                {file.file_type || 'Unknown type'}
               </p>
               <button onClick={() => handleDownload(file)} className="btn btn-primary" style={{ width: '100%' }}>
                 Download

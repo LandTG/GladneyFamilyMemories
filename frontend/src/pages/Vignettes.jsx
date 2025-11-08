@@ -70,40 +70,67 @@ function Vignettes() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1>Vignettes</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h1>Life Stories & Vignettes</h1>
+          <p style={{
+            fontSize: '1.1rem',
+            color: 'var(--text-secondary)',
+            marginTop: '-1rem',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+          }}>
+            Capture and preserve your memories
+          </p>
+        </div>
         <button onClick={handleCreate} className="btn btn-primary">
-          Create New Vignette
+          + Create New Vignette
         </button>
       </div>
 
       {vignettes.length === 0 ? (
-        <div className="container">
-          <p>No vignettes yet. Create your first vignette to get started!</p>
+        <div className="container" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+          <p style={{
+            fontSize: '1.2rem',
+            color: 'var(--text-secondary)',
+            marginBottom: '2rem',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+          }}>
+            No vignettes yet. Create your first story to begin preserving your family memories!
+          </p>
+          <button onClick={handleCreate} className="btn btn-primary">
+            Get Started
+          </button>
         </div>
       ) : (
         <div className="grid grid-2">
           {vignettes.map((vignette) => (
             <div key={vignette.id} className="card">
-              <h3>{vignette.title}</h3>
-              <p style={{ color: '#666', marginBottom: '1rem' }}>
+              <h3 style={{ marginBottom: '0.75rem', fontSize: '1.5rem' }}>{vignette.title}</h3>
+              <p style={{
+                color: 'var(--text-muted)',
+                marginBottom: '1.25rem',
+                fontSize: '0.9rem',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+              }}>
                 {format(new Date(vignette.created_at), 'MMMM d, yyyy')}
               </p>
-              <p style={{ 
-                marginBottom: '1rem',
+              <p style={{
+                marginBottom: '1.5rem',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 display: '-webkit-box',
                 WebkitLineClamp: 4,
                 WebkitBoxOrient: 'vertical',
+                color: 'var(--text-secondary)',
+                lineHeight: '1.7'
               }}>
                 {vignette.content || 'No content'}
               </p>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button onClick={() => handleView(vignette)} className="btn btn-primary">
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <button onClick={() => handleView(vignette)} className="btn btn-primary" style={{ flex: '1' }}>
                   View
                 </button>
-                <button onClick={() => handleEdit(vignette)} className="btn btn-secondary">
+                <button onClick={() => handleEdit(vignette)} className="btn btn-secondary" style={{ flex: '1' }}>
                   Edit
                 </button>
                 <button onClick={() => handleDelete(vignette.id)} className="btn btn-danger">
