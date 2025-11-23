@@ -5,7 +5,8 @@
       "Bash(python run.py:*)",
       "Bash(pip install:*)",
       "Bash(npm run dev:*)",
-      "Bash(pip uninstall:*)"
+      "Bash(pip uninstall:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
