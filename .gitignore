@@ -58,3 +58,11 @@ Thumbs.db
 frontend/dist/
 frontend/build/
 
+# Claude Code
+.claude/
+.claude
+
+# Documentation (project-specific)
+EMAIL_INVITE_SUMMARY.md
+EMAIL_SETUP_GUIDE.md
+INVITE_CODE_SETUP.md
