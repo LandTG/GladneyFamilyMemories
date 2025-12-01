@@ -49,6 +49,7 @@ yarn-error.log*
 *.swp
 *.swo
 *~
+*.txt
 
 # OS
 .DS_Store
