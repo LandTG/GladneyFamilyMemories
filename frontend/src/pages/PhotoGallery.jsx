@@ -189,262 +189,216 @@ function PhotoGallery() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          {currentView === 'photos' && (
-            <select
-              value={viewMode}
-              onChange={(e) => setViewMode(e.target.value)}
-              style={{
-                padding: '0.75rem 1rem',
-                borderRadius: '10px',
-                border: '2px solid var(--border)',
-                backgroundColor: 'var(--surface)',
-                color: 'var(--text-primary)',
-                fontSize: '1rem',
-                cursor: 'pointer'
-              }}
-            >
-              <option value="grid">Grid View</option>
-              <option value="chronological">Chronological</option>
-            </select>
-          )}
-          {currentView === 'photos' && (
-            <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
-              + Upload Photos
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleFileUpload}
-                style={{ display: 'none' }}
-              />
-            </label>
-          )}
-          {currentView === 'albums' && (
-            <button className="btn btn-primary" onClick={() => setShowCreateAlbum(true)}>
-              + Create Album
-            </button>
-          )}
+          <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
+            + Upload Photos
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleFileUpload}
+              style={{ display: 'none' }}
+            />
+          </label>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div style={{
-        display: 'flex',
-        gap: '1rem',
-        marginBottom: '2rem',
-        borderBottom: '2px solid var(--border)'
-      }}>
-        <button
-          onClick={() => setCurrentView('albums')}
-          style={{
-            padding: '1rem 2rem',
-            background: 'none',
-            border: 'none',
-            borderBottom: currentView === 'albums' ? '3px solid var(--primary)' : '3px solid transparent',
-            color: currentView === 'albums' ? 'var(--primary)' : 'var(--text-secondary)',
-            fontSize: '1.1rem',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'all 0.2s'
-          }}
-        >
-          Albums ({albums.length})
-        </button>
-        <button
-          onClick={() => {
-            setCurrentView('photos')
-            setSelectedAlbum(null)
-          }}
-          style={{
-            padding: '1rem 2rem',
-            background: 'none',
-            border: 'none',
-            borderBottom: currentView === 'photos' ? '3px solid var(--primary)' : '3px solid transparent',
-            color: currentView === 'photos' ? 'var(--primary)' : 'var(--text-secondary)',
-            fontSize: '1.1rem',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'all 0.2s'
-          }}
-        >
-          All Photos ({photos.length})
-        </button>
-      </div>
-
-      {/* Photos View */}
-      {currentView === 'photos' && (
-        <>
-          {photos.length === 0 ? (
-            <div className="container" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-              <p style={{
-                fontSize: '1.2rem',
-                color: 'var(--text-secondary)',
-                marginBottom: '2rem',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
-              }}>
-                No photos yet. Upload your first photo to start building your family gallery!
+      {/* Albums Section */}
+      {selectedAlbum ? (
+        /* Viewing specific album */
+        <div>
+          <button
+            onClick={() => setSelectedAlbum(null)}
+            className="btn btn-secondary"
+            style={{ marginBottom: '1.5rem' }}
+          >
+            ← Back to Albums
+          </button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <div>
+              <h2>{selectedAlbum.name}</h2>
+              {selectedAlbum.description && (
+                <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif' }}>
+                  {selectedAlbum.description}
+                </p>
+              )}
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.5rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif' }}>
+                {albumPhotos.length} {albumPhotos.length === 1 ? 'photo' : 'photos'}
               </p>
-              <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
-                Upload Photos
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  style={{ display: 'none' }}
-                />
-              </label>
+            </div>
+            {user?.is_admin && (
+              <button
+                onClick={() => handleDeleteAlbum(selectedAlbum.id)}
+                className="btn"
+                style={{
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '8px'
+                }}
+              >
+                Delete Album
+              </button>
+            )}
+          </div>
+          {albumPhotos.length === 0 ? (
+            <div className="container" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+              <p style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif' }}>
+                No photos in this album yet.
+              </p>
             </div>
           ) : (
-            <div className={viewMode === 'grid' ? 'photo-grid' : 'photo-chronological'}>
-              {sortedPhotos.map((photo) => (
-                <div
-                  key={photo.id}
-                  className="photo-item"
-                  onClick={() => setSelectedPhoto(photo)}
-                >
+            <div className="photo-grid">
+              {albumPhotos.map((photo) => (
+                <div key={photo.id} className="photo-item" style={{ position: 'relative' }}>
                   <AuthenticatedImage
                     photoId={photo.id}
                     alt={photo.title || 'Photo'}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onClick={() => setSelectedPhoto(photo)}
                   />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleRemovePhotoFromAlbum(photo.id, selectedAlbum.id)
+                    }}
+                    style={{
+                      position: 'absolute',
+                      top: '0.5rem',
+                      right: '0.5rem',
+                      background: 'rgba(220, 53, 69, 0.9)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '30px',
+                      height: '30px',
+                      cursor: 'pointer',
+                      fontSize: '1.2rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    ×
+                  </button>
                 </div>
               ))}
             </div>
           )}
-        </>
-      )}
-
-      {/* Albums View */}
-      {currentView === 'albums' && (
+        </div>
+      ) : (
         <>
-          {selectedAlbum ? (
-            <div>
-              <button
-                onClick={() => setSelectedAlbum(null)}
-                className="btn btn-secondary"
-                style={{ marginBottom: '1.5rem' }}
-              >
-                ← Back to Albums
+          {/* Albums Section - Always show */}
+          <div style={{ marginBottom: '4rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+              <h2 style={{ fontSize: '2rem', color: 'var(--primary)' }}>Albums ({albums.length})</h2>
+              <button className="btn btn-primary" onClick={() => setShowCreateAlbum(true)}>
+                + Create Album
               </button>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <div>
-                  <h2>{selectedAlbum.name}</h2>
-                  {selectedAlbum.description && (
-                    <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif' }}>
-                      {selectedAlbum.description}
-                    </p>
-                  )}
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.5rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif' }}>
-                    {albumPhotos.length} {albumPhotos.length === 1 ? 'photo' : 'photos'}
-                  </p>
-                </div>
-                {user?.is_admin && (
-                  <button
-                    onClick={() => handleDeleteAlbum(selectedAlbum.id)}
-                    className="btn"
-                    style={{
-                      backgroundColor: '#dc3545',
-                      color: 'white',
-                      border: 'none',
-                      padding: '0.75rem 1.5rem',
-                      borderRadius: '8px'
-                    }}
-                  >
-                    Delete Album
-                  </button>
-                )}
-              </div>
-              {albumPhotos.length === 0 ? (
-                <div className="container" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-                  <p style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif' }}>
-                    No photos in this album yet.
-                  </p>
-                </div>
-              ) : (
-                <div className="photo-grid">
-                  {albumPhotos.map((photo) => (
-                    <div key={photo.id} className="photo-item" style={{ position: 'relative' }}>
-                      <AuthenticatedImage
-                        photoId={photo.id}
-                        alt={photo.title || 'Photo'}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        onClick={() => setSelectedPhoto(photo)}
-                      />
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleRemovePhotoFromAlbum(photo.id, selectedAlbum.id)
-                        }}
-                        style={{
-                          position: 'absolute',
-                          top: '0.5rem',
-                          right: '0.5rem',
-                          background: 'rgba(220, 53, 69, 0.9)',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '50%',
-                          width: '30px',
-                          height: '30px',
-                          cursor: 'pointer',
-                          fontSize: '1.2rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
-          ) : (
-            <>
-              {albums.length === 0 ? (
-                <div className="container" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-                  <p style={{
-                    fontSize: '1.2rem',
-                    color: 'var(--text-secondary)',
-                    marginBottom: '2rem',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
-                  }}>
-                    No albums yet. Create your first album to organize your photos!
-                  </p>
-                  <button className="btn btn-primary" onClick={() => setShowCreateAlbum(true)}>
-                    Create Album
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-3">
-                  {albums.map((album) => (
-                    <div key={album.id} className="card" style={{ cursor: 'pointer' }} onClick={() => handleViewAlbum(album.id)}>
-                      <div style={{ fontSize: '3rem', marginBottom: '1rem', textAlign: 'center' }}>📁</div>
-                      <h3 style={{ marginBottom: '0.5rem' }}>{album.name}</h3>
-                      {album.description && (
-                        <p style={{
-                          color: 'var(--text-secondary)',
-                          fontSize: '0.9rem',
-                          marginBottom: '0.75rem',
-                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
-                        }}>
-                          {album.description}
-                        </p>
-                      )}
+            {albums.length === 0 ? (
+              <div className="container" style={{ textAlign: 'center', padding: '2rem', backgroundColor: 'var(--surface)', borderRadius: '12px' }}>
+                <p style={{
+                  fontSize: '1.1rem',
+                  color: 'var(--text-secondary)',
+                  marginBottom: '1rem',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+                }}>
+                  No albums yet. Create your first album to organize your photos!
+                </p>
+                <button className="btn btn-primary" onClick={() => setShowCreateAlbum(true)}>
+                  Create Album
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-3">
+                {albums.map((album) => (
+                  <div key={album.id} className="card" style={{ cursor: 'pointer' }} onClick={() => handleViewAlbum(album.id)}>
+                    <div style={{ fontSize: '3rem', marginBottom: '1rem', textAlign: 'center' }}>📁</div>
+                    <h3 style={{ marginBottom: '0.5rem' }}>{album.name}</h3>
+                    {album.description && (
                       <p style={{
-                        color: 'var(--text-muted)',
-                        fontSize: '0.85rem',
+                        color: 'var(--text-secondary)',
+                        fontSize: '0.9rem',
+                        marginBottom: '0.75rem',
                         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
                       }}>
-                        {album.photo_count || 0} {album.photo_count === 1 ? 'photo' : 'photos'}
+                        {album.description}
                       </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
-          )}
+                    )}
+                    <p style={{
+                      color: 'var(--text-muted)',
+                      fontSize: '0.85rem',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+                    }}>
+                      {album.photo_count || 0} {album.photo_count === 1 ? 'photo' : 'photos'}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* All Photos Section - Always show below albums */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+              <h2 style={{ fontSize: '2rem', color: 'var(--primary)' }}>All Photos ({photos.length})</h2>
+              <select
+                value={viewMode}
+                onChange={(e) => setViewMode(e.target.value)}
+                style={{
+                  padding: '0.75rem 1rem',
+                  borderRadius: '10px',
+                  border: '2px solid var(--border)',
+                  backgroundColor: 'var(--surface)',
+                  color: 'var(--text-primary)',
+                  fontSize: '1rem',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value="grid">Grid View</option>
+                <option value="chronological">Chronological</option>
+              </select>
+            </div>
+            {photos.length === 0 ? (
+              <div className="container" style={{ textAlign: 'center', padding: '2rem', backgroundColor: 'var(--surface)', borderRadius: '12px' }}>
+                <p style={{
+                  fontSize: '1.1rem',
+                  color: 'var(--text-secondary)',
+                  marginBottom: '1rem',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+                }}>
+                  No photos yet. Upload your first photo to start building your family gallery!
+                </p>
+                <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
+                  Upload Photos
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+              </div>
+            ) : (
+              <div className={viewMode === 'grid' ? 'photo-grid' : 'photo-chronological'}>
+                {sortedPhotos.map((photo) => (
+                  <div
+                    key={photo.id}
+                    className="photo-item"
+                    onClick={() => setSelectedPhoto(photo)}
+                  >
+                    <AuthenticatedImage
+                      photoId={photo.id}
+                      alt={photo.title || 'Photo'}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </>
       )}
 

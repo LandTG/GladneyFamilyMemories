@@ -329,6 +329,96 @@ def delete_background(
     return {"message": "Background deleted"}
 
 
+# Database Backup routes (admin only)
+@app.post("/api/admin/backup")
+def create_backup(current_admin: models.User = Depends(get_current_admin)):
+    """Create a database backup (admin only)"""
+    import sqlite3
+    from datetime import datetime
+
+    DB_PATH = Path("tag_diary.db")
+    BACKUP_DIR = Path("backups")
+    BACKUP_DIR.mkdir(exist_ok=True)
+
+    if not DB_PATH.exists():
+        raise HTTPException(status_code=404, detail="Database not found")
+
+    try:
+        # Create timestamp for backup filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_filename = f"tag_diary_backup_{timestamp}.db"
+        backup_path = BACKUP_DIR / backup_filename
+
+        # Use SQLite backup API for safe backup
+        source_conn = sqlite3.connect(str(DB_PATH))
+        backup_conn = sqlite3.connect(str(backup_path))
+
+        with backup_conn:
+            source_conn.backup(backup_conn)
+
+        source_conn.close()
+        backup_conn.close()
+
+        backup_size = backup_path.stat().st_size
+
+        return {
+            "message": "Backup created successfully",
+            "filename": backup_filename,
+            "size": backup_size,
+            "timestamp": timestamp
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Backup failed: {str(e)}")
+
+
+@app.get("/api/admin/backups")
+def list_backups(current_admin: models.User = Depends(get_current_admin)):
+    """List all available backups (admin only)"""
+    BACKUP_DIR = Path("backups")
+
+    if not BACKUP_DIR.exists():
+        return {"backups": []}
+
+    backup_files = sorted(
+        BACKUP_DIR.glob("tag_diary_backup_*.db"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True
+    )
+
+    backups = []
+    for backup_file in backup_files:
+        backups.append({
+            "filename": backup_file.name,
+            "size": backup_file.stat().st_size,
+            "created": datetime.fromtimestamp(backup_file.stat().st_mtime).isoformat()
+        })
+
+    return {"backups": backups}
+
+
+@app.get("/api/admin/backup/{filename}")
+def download_backup(
+    filename: str,
+    current_admin: models.User = Depends(get_current_admin)
+):
+    """Download a specific backup file (admin only)"""
+    BACKUP_DIR = Path("backups")
+    backup_path = BACKUP_DIR / filename
+
+    # Security: ensure filename doesn't contain path traversal
+    if ".." in filename or "/" in filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    if not backup_path.exists():
+        raise HTTPException(status_code=404, detail="Backup not found")
+
+    return FileResponse(
+        path=str(backup_path),
+        filename=filename,
+        media_type="application/x-sqlite3"
+    )
+
+
 # Authentication routes
 @app.post("/api/auth/register", response_model=schemas.User)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):

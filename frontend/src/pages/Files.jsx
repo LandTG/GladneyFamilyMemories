@@ -172,7 +172,7 @@ function Files() {
 
   const canViewInline = (fileType) => {
     if (!fileType) return false
-    return fileType.includes('image') || fileType.includes('pdf') || fileType.includes('text')
+    return fileType.includes('image') || fileType.includes('pdf') || fileType.includes('text') || fileType.includes('video')
   }
 
   const getFileIcon = (fileType) => {
@@ -330,19 +330,17 @@ function Files() {
                     {file.file_type || 'Unknown type'}
                   </p>
                   <div style={{ display: 'flex', gap: '0.5rem', width: '100%', flexWrap: 'wrap' }}>
-                    {canViewInline(file.file_type) && (
-                      <button
-                        onClick={() => handleView(file)}
-                        className="btn btn-primary"
-                        style={{
-                          flex: '1 1 auto',
-                          padding: '0.5rem 0.75rem',
-                          fontSize: '0.85rem'
-                        }}
-                      >
-                        View
-                      </button>
-                    )}
+                    <button
+                      onClick={() => handleView(file)}
+                      className="btn btn-primary"
+                      style={{
+                        flex: '1 1 auto',
+                        padding: '0.5rem 0.75rem',
+                        fontSize: '0.85rem'
+                      }}
+                    >
+                      View
+                    </button>
                     <button
                       onClick={() => handleDownload(file)}
                       className="btn btn-primary"
@@ -458,6 +456,18 @@ function Files() {
                   objectFit: 'contain'
                 }}
               />
+            ) : viewingFile.file_type?.includes('video') ? (
+              <video
+                src={viewingFile.url}
+                controls
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain'
+                }}
+              >
+                Your browser does not support the video tag.
+              </video>
             ) : viewingFile.file_type?.includes('pdf') ? (
               <iframe
                 src={viewingFile.url}
