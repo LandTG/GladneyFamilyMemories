@@ -395,7 +395,7 @@ def auth_health(db: Session = Depends(get_db)):
 
 
 @app.post("/api/auth/initialize", response_model=schemas.User)
-def initialize_first_admin(user: schemas.UserCreate, db: Session = Depends(get_db)):
+def initialize_first_admin(user: schemas.UserInitialize, db: Session = Depends(get_db)):
     """Create the first admin user - only works when database has 0 users"""
     # Check if any users exist
     user_count = db.query(models.User).count()

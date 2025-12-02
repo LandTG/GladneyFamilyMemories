@@ -14,6 +14,11 @@ class UserCreate(UserBase):
     invite_code: str
 
 
+class UserInitialize(UserBase):
+    """Schema for creating the first admin user without invite code"""
+    password: str
+
+
 class User(UserBase):
     id: int
     is_active: bool
