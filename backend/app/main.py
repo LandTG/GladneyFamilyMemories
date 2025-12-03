@@ -9,6 +9,10 @@ import os
 import shutil
 import uuid
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from app.database import get_db, init_db
 from app import models, schemas
@@ -669,9 +673,8 @@ def get_vignettes(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    vignettes = db.query(models.Vignette).filter(
-        models.Vignette.author_id == current_user.id
-    ).order_by(models.Vignette.created_at.desc()).all()
+    # Show all vignettes to all users (family website - shared content)
+    vignettes = db.query(models.Vignette).order_by(models.Vignette.created_at.desc()).all()
     return vignettes
 
 
@@ -681,9 +684,9 @@ def get_vignette(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # Show all vignettes to all users (family website - shared content)
     vignette = db.query(models.Vignette).filter(
-        models.Vignette.id == vignette_id,
-        models.Vignette.author_id == current_user.id
+        models.Vignette.id == vignette_id
     ).first()
     if not vignette:
         raise HTTPException(status_code=404, detail="Vignette not found")
@@ -810,9 +813,8 @@ def get_photos(
     skip: int = 0,
     limit: int = 100
 ):
-    photos = db.query(models.Photo).filter(
-        models.Photo.uploaded_by_id == current_user.id
-    ).order_by(models.Photo.created_at.desc()).offset(skip).limit(limit).all()
+    # Show all photos to all users (family website - shared content)
+    photos = db.query(models.Photo).order_by(models.Photo.created_at.desc()).offset(skip).limit(limit).all()
     return photos
 
 
@@ -822,9 +824,9 @@ def get_photo_file(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # Show all photos to all users (family website - shared content)
     photo = db.query(models.Photo).filter(
-        models.Photo.id == photo_id,
-        models.Photo.uploaded_by_id == current_user.id
+        models.Photo.id == photo_id
     ).first()
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found")
@@ -903,9 +905,8 @@ def get_albums(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    albums = db.query(models.Album).filter(
-        models.Album.created_by_id == current_user.id
-    ).all()
+    # Show all albums to all users (family website - shared content)
+    albums = db.query(models.Album).all()
 
     # Add photo count to each album
     for album in albums:
@@ -923,9 +924,9 @@ def get_album(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # Show all albums to all users (family website - shared content)
     album = db.query(models.Album).filter(
-        models.Album.id == album_id,
-        models.Album.created_by_id == current_user.id
+        models.Album.id == album_id
     ).first()
 
     if not album:
@@ -1117,9 +1118,8 @@ def get_audio_recordings(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    recordings = db.query(models.AudioRecording).filter(
-        models.AudioRecording.author_id == current_user.id
-    ).order_by(models.AudioRecording.created_at.desc()).all()
+    # Show all audio recordings to all users (family website - shared content)
+    recordings = db.query(models.AudioRecording).order_by(models.AudioRecording.created_at.desc()).all()
     return recordings
 
 
@@ -1129,9 +1129,9 @@ def get_audio_file(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # Show all audio recordings to all users (family website - shared content)
     audio = db.query(models.AudioRecording).filter(
-        models.AudioRecording.id == audio_id,
-        models.AudioRecording.author_id == current_user.id
+        models.AudioRecording.id == audio_id
     ).first()
     if not audio:
         raise HTTPException(status_code=404, detail="Audio recording not found")
@@ -1248,9 +1248,8 @@ def get_files(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    files = db.query(models.File).filter(
-        models.File.uploaded_by_id == current_user.id
-    ).order_by(models.File.created_at.desc()).all()
+    # Show all files to all users (family website - shared content)
+    files = db.query(models.File).order_by(models.File.created_at.desc()).all()
     return files
 
 
@@ -1260,9 +1259,9 @@ def get_file(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # Show all files to all users (family website - shared content)
     file = db.query(models.File).filter(
-        models.File.id == file_id,
-        models.File.uploaded_by_id == current_user.id
+        models.File.id == file_id
     ).first()
     if not file:
         raise HTTPException(status_code=404, detail="File not found")

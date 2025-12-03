@@ -313,14 +313,24 @@ function PhotoGallery() {
             ) : (
               <div className="grid grid-3">
                 {albums.map((album) => (
-                  <div key={album.id} className="card" style={{ cursor: 'pointer' }} onClick={() => handleViewAlbum(album.id)}>
-                    <div style={{ fontSize: '3rem', marginBottom: '1rem', textAlign: 'center' }}>📁</div>
-                    <h3 style={{ marginBottom: '0.5rem' }}>{album.name}</h3>
+                  <div
+                    key={album.id}
+                    className="card"
+                    style={{
+                      cursor: 'pointer',
+                      backgroundColor: '#bbdefb',
+                      padding: '1rem 1.5rem',
+                      minHeight: 'auto'
+                    }}
+                    onClick={() => handleViewAlbum(album.id)}
+                  >
+                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem', textAlign: 'center' }}>📁</div>
+                    <h3 style={{ marginBottom: '0.5rem', fontSize: '1.1rem' }}>{album.name}</h3>
                     {album.description && (
                       <p style={{
                         color: 'var(--text-secondary)',
-                        fontSize: '0.9rem',
-                        marginBottom: '0.75rem',
+                        fontSize: '0.85rem',
+                        marginBottom: '0.5rem',
                         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
                       }}>
                         {album.description}
@@ -328,8 +338,9 @@ function PhotoGallery() {
                     )}
                     <p style={{
                       color: 'var(--text-muted)',
-                      fontSize: '0.85rem',
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+                      fontSize: '0.8rem',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+                      marginBottom: '0'
                     }}>
                       {album.photo_count || 0} {album.photo_count === 1 ? 'photo' : 'photos'}
                     </p>
@@ -387,12 +398,70 @@ function PhotoGallery() {
                   <div
                     key={photo.id}
                     className="photo-item"
-                    onClick={() => setSelectedPhoto(photo)}
+                    style={{ position: 'relative' }}
                   >
+                    {user?.is_admin && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '0.5rem',
+                        left: '0.5rem',
+                        right: '0.5rem',
+                        display: 'flex',
+                        gap: '0.5rem',
+                        zIndex: 10
+                      }}>
+                        <select
+                          onChange={(e) => {
+                            e.stopPropagation()
+                            const albumId = e.target.value
+                            if (albumId) {
+                              handleAddPhotoToAlbum(photo.id, parseInt(albumId))
+                              e.target.value = ''
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            flex: 1,
+                            padding: '0.4rem',
+                            fontSize: '0.75rem',
+                            borderRadius: '4px',
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            border: '1px solid #ccc',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <option value="">+ Add to Album</option>
+                          {albums.map(album => (
+                            <option key={album.id} value={album.id}>
+                              {album.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeletePhoto(photo.id)
+                          }}
+                          style={{
+                            backgroundColor: 'rgba(220, 53, 69, 0.95)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '3px',
+                            padding: '0.25rem 0.4rem',
+                            fontSize: '0.65rem',
+                            cursor: 'pointer',
+                            fontWeight: '500'
+                          }}
+                        >
+                          Del
+                        </button>
+                      </div>
+                    )}
                     <AuthenticatedImage
                       photoId={photo.id}
                       alt={photo.title || 'Photo'}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
+                      onClick={() => setSelectedPhoto(photo)}
                     />
                   </div>
                 ))}
