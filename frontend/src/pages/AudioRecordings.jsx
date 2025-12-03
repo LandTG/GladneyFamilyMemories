@@ -338,131 +338,135 @@ function AudioRecordings() {
             Capture your voice and stories for future generations
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
-            + Upload Audio
-            <input
-              type="file"
-              accept="audio/*"
-              onChange={handleFileUpload}
-              style={{ display: 'none' }}
-            />
-          </label>
-        </div>
+        {user?.is_admin && (
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
+              + Upload Audio
+              <input
+                type="file"
+                accept="audio/*"
+                onChange={handleFileUpload}
+                style={{ display: 'none' }}
+              />
+            </label>
+          </div>
+        )}
       </div>
 
-      <div className="container" style={{ maxWidth: '400px', margin: '0 0 3rem 0' }}>
-        <h2 style={{ marginBottom: '1.5rem' }}>Record New Audio</h2>
-        <div className="recording-controls">
-          {!isRecording && !audioBlob && (
-            <button onClick={startRecording} className="btn btn-primary">
-              Start Recording
-            </button>
-          )}
-          
-          {isRecording && (
-            <>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '2rem',
-                width: '100%',
-                flexWrap: 'wrap'
-              }}>
-                <div className="recording-indicator" style={{ flex: '0 0 auto' }}>
-                  <span className="recording-dot"></span>
-                  Recording: {formatTime(recordingTime)}
-                </div>
-                <div style={{ flex: '1 1 300px', minWidth: '250px' }}>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    marginBottom: '0.5rem',
-                    fontSize: '0.9rem',
-                    color: 'var(--text-secondary)',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
-                  }}>
-                    <span>Audio Level</span>
-                    <span>{Math.round(audioLevel)}%</span>
+      {user?.is_admin && (
+        <div className="container" style={{ maxWidth: '400px', margin: '0 0 3rem 0' }}>
+          <h2 style={{ marginBottom: '1.5rem' }}>Record New Audio</h2>
+          <div className="recording-controls">
+            {!isRecording && !audioBlob && (
+              <button onClick={startRecording} className="btn btn-primary">
+                Start Recording
+              </button>
+            )}
+
+            {isRecording && (
+              <>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '2rem',
+                  width: '100%',
+                  flexWrap: 'wrap'
+                }}>
+                  <div className="recording-indicator" style={{ flex: '0 0 auto' }}>
+                    <span className="recording-dot"></span>
+                    Recording: {formatTime(recordingTime)}
                   </div>
-                  <div style={{
-                    width: '100%',
-                    height: '40px',
-                    backgroundColor: 'var(--surface)',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    border: '2px solid var(--border)',
-                    position: 'relative'
-                  }}>
+                  <div style={{ flex: '1 1 300px', minWidth: '250px' }}>
                     <div style={{
-                      height: '100%',
-                      width: `${audioLevel}%`,
-                      backgroundColor: audioLevel > 70 ? '#4CAF50' : audioLevel > 30 ? '#FFC107' : '#FF9800',
-                      transition: 'width 0.1s ease-out, background-color 0.3s',
-                      boxShadow: audioLevel > 5 ? `0 0 10px ${audioLevel > 70 ? '#4CAF50' : audioLevel > 30 ? '#FFC107' : '#FF9800'}` : 'none'
-                    }}></div>
-                    <div style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
                       display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.85rem',
-                      fontWeight: '600',
-                      color: audioLevel > 50 ? 'white' : 'var(--text-primary)',
-                      textShadow: audioLevel > 50 ? '0 1px 2px rgba(0,0,0,0.3)' : 'none',
-                      pointerEvents: 'none',
+                      justifyContent: 'space-between',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.9rem',
+                      color: 'var(--text-secondary)',
                       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
                     }}>
-                      {audioLevel < 5 ? 'Speak into microphone...' : 'Recording...'}
+                      <span>Audio Level</span>
+                      <span>{Math.round(audioLevel)}%</span>
+                    </div>
+                    <div style={{
+                      width: '100%',
+                      height: '40px',
+                      backgroundColor: 'var(--surface)',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      border: '2px solid var(--border)',
+                      position: 'relative'
+                    }}>
+                      <div style={{
+                        height: '100%',
+                        width: `${audioLevel}%`,
+                        backgroundColor: audioLevel > 70 ? '#4CAF50' : audioLevel > 30 ? '#FFC107' : '#FF9800',
+                        transition: 'width 0.1s ease-out, background-color 0.3s',
+                        boxShadow: audioLevel > 5 ? `0 0 10px ${audioLevel > 70 ? '#4CAF50' : audioLevel > 30 ? '#FFC107' : '#FF9800'}` : 'none'
+                      }}></div>
+                      <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.85rem',
+                        fontWeight: '600',
+                        color: audioLevel > 50 ? 'white' : 'var(--text-primary)',
+                        textShadow: audioLevel > 50 ? '0 1px 2px rgba(0,0,0,0.3)' : 'none',
+                        pointerEvents: 'none',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+                      }}>
+                        {audioLevel < 5 ? 'Speak into microphone...' : 'Recording...'}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              <button onClick={stopRecording} className="btn btn-danger">
-                Stop Recording
-              </button>
-            </>
-          )}
-          
-          {audioBlob && !isRecording && (
-            <div className="recording-preview">
-              <audio controls src={URL.createObjectURL(audioBlob)} />
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button 
-                  onClick={handleUploadRecording} 
-                  className="btn btn-primary"
-                  disabled={!audioBlob || audioBlob.size === 0}
-                >
-                  Save Recording
+                <button onClick={stopRecording} className="btn btn-danger">
+                  Stop Recording
                 </button>
-                <button 
-                  onClick={() => {
-                    setAudioBlob(null)
-                    setRecordingTime(0)
-                  }} 
-                  className="btn btn-secondary"
-                >
-                  Discard
-                </button>
+              </>
+            )}
+
+            {audioBlob && !isRecording && (
+              <div className="recording-preview">
+                <audio controls src={URL.createObjectURL(audioBlob)} />
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                  <button
+                    onClick={handleUploadRecording}
+                    className="btn btn-primary"
+                    disabled={!audioBlob || audioBlob.size === 0}
+                  >
+                    Save Recording
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAudioBlob(null)
+                      setRecordingTime(0)
+                    }}
+                    className="btn btn-secondary"
+                  >
+                    Discard
+                  </button>
+                </div>
+                {audioBlob && (
+                  <p style={{
+                    marginTop: '0.5rem',
+                    fontSize: '0.85rem',
+                    color: 'var(--text-muted)',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+                  }}>
+                    Size: {(audioBlob.size / 1024).toFixed(2)} KB
+                  </p>
+                )}
               </div>
-              {audioBlob && (
-                <p style={{ 
-                  marginTop: '0.5rem', 
-                  fontSize: '0.85rem', 
-                  color: 'var(--text-muted)',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
-                }}>
-                  Size: {(audioBlob.size / 1024).toFixed(2)} KB
-                </p>
-              )}
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div style={{ marginTop: '3rem' }}>
         <h2 style={{ marginBottom: '1.5rem' }}>Your Recordings</h2>

@@ -17,6 +17,9 @@ function Vignettes() {
   const [editingFileId, setEditingFileId] = useState(null)
   const [editFileTitle, setEditFileTitle] = useState('')
   const [editFileDescription, setEditFileDescription] = useState('')
+  const [editFileDate, setEditFileDate] = useState('')
+  const [editingVignetteDate, setEditingVignetteDate] = useState(null)
+  const [editVignetteDate, setEditVignetteDate] = useState('')
   const [sortBy, setSortBy] = useState('date-desc') // date-desc, date-asc, title-asc, title-desc, type
 
   useEffect(() => {
@@ -37,7 +40,7 @@ function Vignettes() {
 
   const fetchFiles = async () => {
     try {
-      const response = await axios.get('/api/files')
+      const response = await axios.get('/api/files?source=vignettes')
       setFiles(response.data)
     } catch (error) {
       console.error('Failed to fetch files:', error)
@@ -91,6 +94,7 @@ function Vignettes() {
       const formData = new FormData()
       formData.append('file', file)
       formData.append('title', file.name)
+      formData.append('source', 'vignettes')
 
       try {
         await axios.post('/api/files', formData, {
@@ -162,21 +166,29 @@ function Vignettes() {
     setEditingFileId(file.id)
     setEditFileTitle(file.title || '')
     setEditFileDescription(file.description || '')
+    // Format date for datetime-local input (YYYY-MM-DDTHH:mm)
+    const date = new Date(file.created_at)
+    const formattedDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16)
+    setEditFileDate(formattedDate)
   }
 
   const handleSaveFileEdit = async () => {
     try {
-      const formData = new FormData()
-      formData.append('title', editFileTitle)
-      formData.append('description', editFileDescription)
+      // Use PATCH to update the file with date
+      const payload = {
+        title: editFileTitle,
+        description: editFileDescription,
+        created_at: new Date(editFileDate).toISOString()
+      }
 
-      await axios.put(`/api/files/${editingFileId}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      await axios.patch(`/api/files/${editingFileId}`, payload)
 
       setEditingFileId(null)
       setEditFileTitle('')
       setEditFileDescription('')
+      setEditFileDate('')
       fetchFiles()
     } catch (error) {
       console.error('Failed to update file:', error)
@@ -188,6 +200,7 @@ function Vignettes() {
     setEditingFileId(null)
     setEditFileTitle('')
     setEditFileDescription('')
+    setEditFileDate('')
   }
 
   const handleDeleteFile = async (id) => {
@@ -204,6 +217,38 @@ function Vignettes() {
     }
   }
 
+  const handleEditVignetteDate = (vignette) => {
+    setEditingVignetteDate(vignette.id)
+    // Format date for datetime-local input (YYYY-MM-DDTHH:mm)
+    const date = new Date(vignette.created_at)
+    const formattedDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16)
+    setEditVignetteDate(formattedDate)
+  }
+
+  const handleSaveVignetteDate = async (vignetteId) => {
+    try {
+      const payload = {
+        created_at: new Date(editVignetteDate).toISOString()
+      }
+
+      await axios.patch(`/api/vignettes/${vignetteId}`, payload)
+
+      setEditingVignetteDate(null)
+      setEditVignetteDate('')
+      fetchVignettes()
+    } catch (error) {
+      console.error('Failed to update vignette date:', error)
+      alert('Failed to update date. Please try again.')
+    }
+  }
+
+  const handleCancelVignetteDateEdit = () => {
+    setEditingVignetteDate(null)
+    setEditVignetteDate('')
+  }
+
   const closeViewer = () => {
     if (viewingFile?.url) {
       window.URL.revokeObjectURL(viewingFile.url)
@@ -213,7 +258,7 @@ function Vignettes() {
 
   const canViewInline = (fileType) => {
     if (!fileType) return false
-    return fileType.includes('image') || fileType.includes('pdf') || fileType.includes('text')
+    return fileType.includes('image') || fileType.includes('pdf') || fileType.includes('text') || fileType.includes('video') || fileType.includes('audio')
   }
 
   const getFileIcon = (fileType) => {
@@ -223,6 +268,7 @@ function Vignettes() {
     if (fileType.includes('excel') || fileType.includes('spreadsheet')) return '📗'
     if (fileType.includes('image')) return '🖼️'
     if (fileType.includes('video')) return '🎥'
+    if (fileType.includes('audio')) return '🎵'
     return '📄'
   }
 
@@ -294,25 +340,27 @@ function Vignettes() {
             Capture and preserve your memories
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <button onClick={handleCreate} className="btn btn-primary">
-            + Create New Vignette
-          </button>
-          <label className="btn btn-primary" style={{ cursor: 'pointer', margin: 0 }}>
-            {uploading ? 'Uploading...' : '📤 Upload Files'}
-            <input
-              type="file"
-              multiple
-              onChange={handleFileUpload}
-              style={{ display: 'none' }}
-              disabled={uploading}
-            />
-          </label>
-        </div>
+        {user?.is_admin && (
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <button onClick={handleCreate} className="btn btn-primary">
+              + Create New Vignette
+            </button>
+            <label className="btn btn-primary" style={{ cursor: 'pointer', margin: 0 }}>
+              {uploading ? 'Uploading...' : '📤 Upload Files'}
+              <input
+                type="file"
+                multiple
+                onChange={handleFileUpload}
+                style={{ display: 'none' }}
+                disabled={uploading}
+              />
+            </label>
+          </div>
+        )}
       </div>
 
       {/* Sort Controls */}
-      {sortedItems.length > 0 && (
+      {user?.is_admin && sortedItems.length > 0 && (
         <div style={{
           marginBottom: '2rem',
           display: 'flex',
@@ -366,53 +414,113 @@ function Vignettes() {
             marginBottom: '2rem',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
           }}>
-            No content yet. Create your first vignette or upload a file to begin!
+            {user?.is_admin
+              ? 'No content yet. Create your first vignette or upload a file to begin!'
+              : 'No content available yet.'}
           </p>
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button onClick={handleCreate} className="btn btn-primary">
-              Create Vignette
-            </button>
-            <label className="btn btn-primary" style={{ cursor: 'pointer', margin: 0 }}>
-              Upload Files
-              <input
-                type="file"
-                multiple
-                onChange={handleFileUpload}
-                style={{ display: 'none' }}
-              />
-            </label>
-          </div>
+          {user?.is_admin && (
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button onClick={handleCreate} className="btn btn-primary">
+                Create Vignette
+              </button>
+              <label className="btn btn-primary" style={{ cursor: 'pointer', margin: 0 }}>
+                Upload Files
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileUpload}
+                  style={{ display: 'none' }}
+                />
+              </label>
+            </div>
+          )}
         </div>
       ) : (
         <div className="grid grid-3">
           {sortedItems.map((item) => (
             <div key={`${item.itemType}-${item.id}`} className="card" style={{ textAlign: item.itemType === 'file' ? 'center' : 'left' }}>
               {/* Badge to show type */}
-              <div style={{
-                display: 'inline-block',
-                padding: '0.25rem 0.75rem',
-                borderRadius: '12px',
-                fontSize: '0.75rem',
-                fontWeight: '600',
-                marginBottom: '0.75rem',
-                backgroundColor: item.itemType === 'vignette' ? '#e3f2fd' : '#fff3e0',
-                color: item.itemType === 'vignette' ? '#1976d2' : '#f57c00'
-              }}>
-                {item.itemType === 'vignette' ? '📖 Vignette' : `${getFileIcon(item.file_type)} File`}
-              </div>
+              {user?.is_admin && (
+                <div style={{
+                  display: 'inline-block',
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '12px',
+                  fontSize: '0.75rem',
+                  fontWeight: '600',
+                  marginBottom: '0.75rem',
+                  backgroundColor: item.itemType === 'vignette' ? '#e3f2fd' : '#fff3e0',
+                  color: item.itemType === 'vignette' ? '#1976d2' : '#f57c00'
+                }}>
+                  {item.itemType === 'vignette' ? '📖 Vignette' : `${getFileIcon(item.file_type)} File`}
+                </div>
+              )}
 
               {item.itemType === 'vignette' ? (
                 // Vignette Display
                 <>
                   <h3 style={{ marginBottom: '0.75rem', fontSize: '1.5rem' }}>{item.title}</h3>
-                  <p style={{
-                    color: 'var(--text-muted)',
-                    marginBottom: '1.25rem',
-                    fontSize: '0.9rem',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
-                  }}>
-                    {format(new Date(item.created_at), 'MMMM d, yyyy')}
-                  </p>
+                  {editingVignetteDate === item.id ? (
+                    <div style={{ marginBottom: '1.25rem' }}>
+                      <input
+                        type="datetime-local"
+                        value={editVignetteDate}
+                        onChange={(e) => setEditVignetteDate(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '0.5rem',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border)',
+                          fontSize: '0.9rem',
+                          marginBottom: '0.5rem'
+                        }}
+                      />
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                          onClick={() => handleSaveVignetteDate(item.id)}
+                          className="btn btn-primary"
+                          style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem' }}
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={handleCancelVignetteDateEdit}
+                          className="btn"
+                          style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem' }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p style={{
+                      color: 'var(--text-muted)',
+                      marginBottom: '1.25rem',
+                      fontSize: '0.9rem',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}>
+                      {format(new Date(item.created_at), 'MMMM d, yyyy')}
+                      {user?.is_admin && (
+                        <button
+                          onClick={() => handleEditVignetteDate(item)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '0.125rem 0.25rem',
+                            fontSize: '0.75rem',
+                            color: 'var(--primary)',
+                            opacity: 0.7
+                          }}
+                          title="Edit date"
+                        >
+                          ✏️
+                        </button>
+                      )}
+                    </p>
+                  )}
                   <p style={{
                     marginBottom: '1.5rem',
                     overflow: 'hidden',
@@ -508,6 +616,23 @@ function Vignettes() {
                       }}
                     />
                   </div>
+                  <div style={{ marginBottom: '1rem' }}>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                      Created Date
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={editFileDate}
+                      onChange={(e) => setEditFileDate(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border)',
+                        fontSize: '1rem'
+                      }}
+                    />
+                  </div>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <button
                       onClick={handleSaveFileEdit}
@@ -528,9 +653,11 @@ function Vignettes() {
               ) : (
                 // File View Mode
                 <>
-                  <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>
-                    {getFileIcon(item.file_type)}
-                  </div>
+                  {user?.is_admin && (
+                    <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>
+                      {getFileIcon(item.file_type)}
+                    </div>
+                  )}
                   <h3 style={{ marginBottom: '0.75rem', fontSize: '1.25rem' }}>{item.title || item.filename}</h3>
                   <p style={{
                     color: 'var(--text-muted)',
@@ -572,17 +699,19 @@ function Vignettes() {
                         View
                       </button>
                     )}
-                    <button
-                      onClick={() => handleDownload(item)}
-                      className="btn btn-primary"
-                      style={{
-                        flex: '1 1 auto',
-                        padding: '0.5rem 0.75rem',
-                        fontSize: '0.85rem'
-                      }}
-                    >
-                      Download
-                    </button>
+                    {user?.is_admin && (
+                      <button
+                        onClick={() => handleDownload(item)}
+                        className="btn btn-primary"
+                        style={{
+                          flex: '1 1 auto',
+                          padding: '0.5rem 0.75rem',
+                          fontSize: '0.85rem'
+                        }}
+                      >
+                        Download
+                      </button>
+                    )}
                     {user?.is_admin && (
                       <>
                         <button
@@ -858,6 +987,40 @@ function Vignettes() {
                   objectFit: 'contain'
                 }}
               />
+            ) : viewingFile.file_type?.includes('video') ? (
+              <video
+                controls
+                autoPlay
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain'
+                }}
+              >
+                <source src={viewingFile.url} type={viewingFile.file_type} />
+                Your browser does not support the video tag.
+              </video>
+            ) : viewingFile.file_type?.includes('audio') ? (
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '2rem',
+                color: 'white'
+              }}>
+                <div style={{ fontSize: '6rem' }}>🎵</div>
+                <audio
+                  controls
+                  autoPlay
+                  style={{
+                    width: '100%',
+                    maxWidth: '500px'
+                  }}
+                >
+                  <source src={viewingFile.url} type={viewingFile.file_type} />
+                  Your browser does not support the audio tag.
+                </audio>
+              </div>
             ) : viewingFile.file_type?.includes('pdf') ? (
               <iframe
                 src={viewingFile.url}
@@ -882,9 +1045,11 @@ function Vignettes() {
             ) : (
               <div style={{ color: 'white', textAlign: 'center' }}>
                 <p>Cannot preview this file type</p>
-                <button onClick={() => handleDownload(viewingFile)} className="btn btn-primary">
-                  Download to view
-                </button>
+                {user?.is_admin && (
+                  <button onClick={() => handleDownload(viewingFile)} className="btn btn-primary">
+                    Download to view
+                  </button>
+                )}
               </div>
             )}
           </div>

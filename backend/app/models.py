@@ -40,14 +40,15 @@ class InviteCode(Base):
 
 class Vignette(Base):
     __tablename__ = "vignettes"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True, nullable=False)
     content = Column(Text)
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    sort_order = Column(Integer, default=0, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
+
     author = relationship("User", back_populates="vignettes")
     photos = relationship("VignettePhoto", back_populates="vignette")
 
@@ -66,7 +67,7 @@ class VignettePhoto(Base):
 
 class Photo(Base):
     __tablename__ = "photos"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String, nullable=False)
     file_path = Column(String, nullable=False)
@@ -74,8 +75,9 @@ class Photo(Base):
     description = Column(Text)
     uploaded_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     taken_at = Column(DateTime(timezone=True))
+    sort_order = Column(Integer, default=0, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+
     uploaded_by_user = relationship("User", back_populates="photos")
     albums = relationship("AlbumPhoto", back_populates="photo")
     people_tags = relationship("PhotoPerson", back_populates="photo")
@@ -83,13 +85,14 @@ class Photo(Base):
 
 class Album(Base):
     __tablename__ = "albums"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False, index=True)
     description = Column(Text)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    sort_order = Column(Integer, default=0, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+
     photos = relationship("AlbumPhoto", back_populates="album")
 
 
@@ -150,6 +153,7 @@ class File(Base):
     title = Column(String)
     description = Column(Text)
     file_type = Column(String)
+    source = Column(String, default="vignettes")  # "vignettes" or "files"
     uploaded_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

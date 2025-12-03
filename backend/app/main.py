@@ -674,7 +674,11 @@ def get_vignettes(
     db: Session = Depends(get_db)
 ):
     # Show all vignettes to all users (family website - shared content)
-    vignettes = db.query(models.Vignette).order_by(models.Vignette.created_at.desc()).all()
+    # Sort by sort_order (ascending), then by created_at (desc) as fallback
+    vignettes = db.query(models.Vignette).order_by(
+        models.Vignette.sort_order.asc(),
+        models.Vignette.created_at.desc()
+    ).all()
     return vignettes
 
 
@@ -705,9 +709,36 @@ def update_vignette(
     ).first()
     if not db_vignette:
         raise HTTPException(status_code=404, detail="Vignette not found")
-    
+
     db_vignette.title = vignette.title
     db_vignette.content = vignette.content
+    db.commit()
+    db.refresh(db_vignette)
+    return db_vignette
+
+
+@app.patch("/api/vignettes/{vignette_id}", response_model=schemas.Vignette)
+def patch_vignette(
+    vignette_id: int,
+    vignette: schemas.VignetteUpdate,
+    current_admin: models.User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Update specific fields of a vignette (admin only), including created_at date"""
+    db_vignette = db.query(models.Vignette).filter(
+        models.Vignette.id == vignette_id
+    ).first()
+    if not db_vignette:
+        raise HTTPException(status_code=404, detail="Vignette not found")
+
+    # Update only provided fields
+    if vignette.title is not None:
+        db_vignette.title = vignette.title
+    if vignette.content is not None:
+        db_vignette.content = vignette.content
+    if vignette.created_at is not None:
+        db_vignette.created_at = vignette.created_at
+
     db.commit()
     db.refresh(db_vignette)
     return db_vignette
@@ -743,6 +774,29 @@ def delete_vignette(
 
     print(f"[DELETE VIGNETTE] Successfully deleted vignette {vignette_id}")
     return {"message": "Vignette deleted"}
+
+
+@app.post("/api/vignettes/reorder")
+def reorder_vignettes(
+    vignette_orders: List[dict],
+    current_admin: models.User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Reorder vignettes by setting their sort_order values (admin only)
+
+    Expects: [{"id": 1, "sort_order": 0}, {"id": 2, "sort_order": 1}, ...]
+    """
+    try:
+        for item in vignette_orders:
+            vignette = db.query(models.Vignette).filter(models.Vignette.id == item["id"]).first()
+            if vignette:
+                vignette.sort_order = item["sort_order"]
+
+        db.commit()
+        return {"message": "Vignettes reordered successfully"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Failed to reorder vignettes: {str(e)}")
 
 
 # Photo routes
@@ -814,7 +868,11 @@ def get_photos(
     limit: int = 100
 ):
     # Show all photos to all users (family website - shared content)
-    photos = db.query(models.Photo).order_by(models.Photo.created_at.desc()).offset(skip).limit(limit).all()
+    # Sort by sort_order (ascending), then by created_at (desc) as fallback
+    photos = db.query(models.Photo).order_by(
+        models.Photo.sort_order.asc(),
+        models.Photo.created_at.desc()
+    ).offset(skip).limit(limit).all()
     return photos
 
 
@@ -867,6 +925,29 @@ def delete_photo(
     return {"message": "Photo deleted successfully"}
 
 
+@app.post("/api/photos/reorder")
+def reorder_photos(
+    photo_orders: List[dict],
+    current_admin: models.User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Reorder photos by setting their sort_order values (admin only)
+
+    Expects: [{"id": 1, "sort_order": 0}, {"id": 2, "sort_order": 1}, ...]
+    """
+    try:
+        for item in photo_orders:
+            photo = db.query(models.Photo).filter(models.Photo.id == item["id"]).first()
+            if photo:
+                photo.sort_order = item["sort_order"]
+
+        db.commit()
+        return {"message": "Photos reordered successfully"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Failed to reorder photos: {str(e)}")
+
+
 # Album routes
 @app.post("/api/albums", response_model=schemas.Album)
 def create_album(
@@ -906,7 +987,11 @@ def get_albums(
     db: Session = Depends(get_db)
 ):
     # Show all albums to all users (family website - shared content)
-    albums = db.query(models.Album).all()
+    # Sort by sort_order (ascending), then by created_at (desc) as fallback
+    albums = db.query(models.Album).order_by(
+        models.Album.sort_order.asc(),
+        models.Album.created_at.desc()
+    ).all()
 
     # Add photo count to each album
     for album in albums:
@@ -1054,6 +1139,29 @@ def delete_album(
     db.commit()
 
     return {"message": "Album deleted successfully"}
+
+
+@app.post("/api/albums/reorder")
+def reorder_albums(
+    album_orders: List[dict],
+    current_admin: models.User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Reorder albums by setting their sort_order values (admin only)
+
+    Expects: [{"id": 1, "sort_order": 0}, {"id": 2, "sort_order": 1}, ...]
+    """
+    try:
+        for item in album_orders:
+            album = db.query(models.Album).filter(models.Album.id == item["id"]).first()
+            if album:
+                album.sort_order = item["sort_order"]
+
+        db.commit()
+        return {"message": "Albums reordered successfully"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Failed to reorder albums: {str(e)}")
 
 
 # Audio recording routes
@@ -1219,22 +1327,24 @@ def upload_file(
     file: UploadFile = File(...),
     title: Optional[str] = Form(None),
     description: Optional[str] = Form(None),
+    source: Optional[str] = Form("vignettes"),
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     file_extension = Path(file.filename).suffix
     unique_filename = f"{uuid.uuid4()}{file_extension}"
     file_path = UPLOAD_DIR / "files" / unique_filename
-    
+
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-    
+
     db_file = models.File(
         filename=unique_filename,
         file_path=str(file_path),
         title=title or file.filename,
         description=description,
         file_type=file.content_type,
+        source=source,
         uploaded_by_id=current_user.id,
     )
     db.add(db_file)
@@ -1245,11 +1355,15 @@ def upload_file(
 
 @app.get("/api/files", response_model=List[schemas.File])
 def get_files(
+    source: Optional[str] = None,
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # Show all files to all users (family website - shared content)
-    files = db.query(models.File).order_by(models.File.created_at.desc()).all()
+    # Filter files by source if provided
+    query = db.query(models.File)
+    if source:
+        query = query.filter(models.File.source == source)
+    files = query.order_by(models.File.created_at.desc()).all()
     return files
 
 
@@ -1306,6 +1420,34 @@ def update_file(
         file.title = title
     if description is not None:
         file.description = description
+
+    db.commit()
+    db.refresh(file)
+    return file
+
+
+@app.patch("/api/files/{file_id}", response_model=schemas.File)
+def patch_file(
+    file_id: int,
+    file_update: schemas.FileUpdate,
+    current_admin: models.User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Update specific fields of a file (admin only), including created_at date"""
+    file = db.query(models.File).filter(
+        models.File.id == file_id
+    ).first()
+
+    if not file:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    # Update only provided fields
+    if file_update.title is not None:
+        file.title = file_update.title
+    if file_update.description is not None:
+        file.description = file_update.description
+    if file_update.created_at is not None:
+        file.created_at = file_update.created_at
 
     db.commit()
     db.refresh(file)

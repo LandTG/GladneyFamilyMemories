@@ -18,7 +18,7 @@ function Files() {
 
   const fetchFiles = async () => {
     try {
-      const response = await axios.get('/api/files')
+      const response = await axios.get('/api/files?source=files')
       setFiles(response.data)
     } catch (error) {
       console.error('Failed to fetch files:', error)
@@ -29,11 +29,12 @@ function Files() {
 
   const handleFileUpload = async (e) => {
     const uploadedFiles = Array.from(e.target.files)
-    
+
     for (const file of uploadedFiles) {
       const formData = new FormData()
       formData.append('file', file)
       formData.append('title', file.name)
+      formData.append('source', 'files')
 
       try {
         await axios.post('/api/files', formData, {
@@ -203,15 +204,17 @@ function Files() {
             Store important documents and family treasures
           </p>
         </div>
-        <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
-          + Upload Files
-          <input
-            type="file"
-            multiple
-            onChange={handleFileUpload}
-            style={{ display: 'none' }}
-          />
-        </label>
+        {user?.is_admin && (
+          <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
+            + Upload Files
+            <input
+              type="file"
+              multiple
+              onChange={handleFileUpload}
+              style={{ display: 'none' }}
+            />
+          </label>
+        )}
       </div>
 
       {files.length === 0 ? (
@@ -222,17 +225,19 @@ function Files() {
             marginBottom: '2rem',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
           }}>
-            No files yet. Upload your first document to get started!
+            {user?.is_admin ? 'No files yet. Upload your first document to get started!' : 'No files available yet.'}
           </p>
-          <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
-            Upload Files
-            <input
-              type="file"
-              multiple
-              onChange={handleFileUpload}
-              style={{ display: 'none' }}
-            />
-          </label>
+          {user?.is_admin && (
+            <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
+              Upload Files
+              <input
+                type="file"
+                multiple
+                onChange={handleFileUpload}
+                style={{ display: 'none' }}
+              />
+            </label>
+          )}
         </div>
       ) : (
         <div className="grid grid-3">
@@ -299,9 +304,11 @@ function Files() {
               ) : (
                 // View mode
                 <>
-                  <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>
-                    {getFileIcon(file.file_type)}
-                  </div>
+                  {user?.is_admin && (
+                    <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>
+                      {getFileIcon(file.file_type)}
+                    </div>
+                  )}
                   <h3 style={{ marginBottom: '0.75rem', fontSize: '1.25rem' }}>{file.title || file.filename}</h3>
                   <p style={{
                     color: 'var(--text-muted)',
@@ -341,17 +348,19 @@ function Files() {
                     >
                       View
                     </button>
-                    <button
-                      onClick={() => handleDownload(file)}
-                      className="btn btn-primary"
-                      style={{
-                        flex: '1 1 auto',
-                        padding: '0.5rem 0.75rem',
-                        fontSize: '0.85rem'
-                      }}
-                    >
-                      Download
-                    </button>
+                    {user?.is_admin && (
+                      <button
+                        onClick={() => handleDownload(file)}
+                        className="btn btn-primary"
+                        style={{
+                          flex: '1 1 auto',
+                          padding: '0.5rem 0.75rem',
+                          fontSize: '0.85rem'
+                        }}
+                      >
+                        Download
+                      </button>
+                    )}
                     {user?.is_admin && (
                       <>
                         <button
@@ -492,9 +501,11 @@ function Files() {
             ) : (
               <div style={{ color: 'white', textAlign: 'center' }}>
                 <p>Cannot preview this file type</p>
-                <button onClick={() => handleDownload(viewingFile)} className="btn btn-primary">
-                  Download to view
-                </button>
+                {user?.is_admin && (
+                  <button onClick={() => handleDownload(viewingFile)} className="btn btn-primary">
+                    Download to view
+                  </button>
+                )}
               </div>
             )}
           </div>

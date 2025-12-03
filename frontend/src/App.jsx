@@ -15,12 +15,26 @@ import './App.css'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
-  
+
   if (loading) {
     return <div className="loading">Loading...</div>
   }
-  
+
   return user ? children : <Navigate to="/login" />
+}
+
+function AdminRoute({ children }) {
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return <div className="loading">Loading...</div>
+  }
+
+  if (!user) {
+    return <Navigate to="/login" />
+  }
+
+  return user.is_admin ? children : <Navigate to="/" />
 }
 
 function AppRoutes() {
@@ -70,9 +84,9 @@ function AppRoutes() {
       <Route
         path="/admin"
         element={
-          <ProtectedRoute>
+          <AdminRoute>
             <AdminPanel />
-          </ProtectedRoute>
+          </AdminRoute>
         }
       />
     </Routes>

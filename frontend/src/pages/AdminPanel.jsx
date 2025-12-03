@@ -340,47 +340,43 @@ function AdminPanel() {
           {registeredUsers.length === 0 ? (
             <p className="no-codes">No users registered yet.</p>
           ) : (
-            <div className="codes-table-container">
-              <table className="codes-table">
-                <thead>
-                  <tr>
-                    <th>Username</th>
-                    <th>Full Name</th>
-                    <th>Email</th>
-                    <th>Admin</th>
-                    <th>Registered</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {registeredUsers.map((registeredUser) => (
-                    <tr key={registeredUser.id}>
-                      <td><strong>{registeredUser.username}</strong></td>
-                      <td>{registeredUser.full_name}</td>
-                      <td>{registeredUser.email}</td>
-                      <td>
-                        {registeredUser.is_admin ? (
-                          <span className="badge badge-used">Admin</span>
-                        ) : (
-                          <span className="badge badge-active">User</span>
-                        )}
-                      </td>
-                      <td>{formatDate(registeredUser.created_at)}</td>
-                      <td>
-                        {user && registeredUser.id !== user.id && (
-                          <button
-                            className="btn btn-danger btn-sm"
-                            onClick={() => deleteUser(registeredUser.id, registeredUser.username)}
-                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.85rem' }}
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="grid grid-3">
+              {registeredUsers.map((registeredUser) => (
+                <div key={registeredUser.id} className="card">
+                  <div style={{ marginBottom: '1rem' }}>
+                    <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--primary)' }}>
+                      {registeredUser.username}
+                    </h3>
+                    {registeredUser.is_admin ? (
+                      <span className="badge badge-used">Admin</span>
+                    ) : (
+                      <span className="badge badge-active">User</span>
+                    )}
+                  </div>
+
+                  <div style={{ marginBottom: '1rem' }}>
+                    <p style={{ marginBottom: '0.5rem' }}>
+                      <strong>Full Name:</strong> {registeredUser.full_name || 'N/A'}
+                    </p>
+                    <p style={{ marginBottom: '0.5rem' }}>
+                      <strong>Email:</strong> {registeredUser.email || 'N/A'}
+                    </p>
+                    <p style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                      <strong>Registered:</strong> {formatDate(registeredUser.created_at)}
+                    </p>
+                  </div>
+
+                  {user && registeredUser.id !== user.id && (
+                    <button
+                      className="btn btn-danger"
+                      onClick={() => deleteUser(registeredUser.id, registeredUser.username)}
+                      style={{ width: '100%', padding: '0.5rem', fontSize: '0.9rem' }}
+                    >
+                      Delete User
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>

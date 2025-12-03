@@ -216,7 +216,7 @@ h3 {
 }
 
 .card {
-  background: var(--surface);
+  background: #E6D9F2;
   border-radius: 16px;
   padding: 2rem;
   box-shadow: 0 4px 16px var(--shadow);

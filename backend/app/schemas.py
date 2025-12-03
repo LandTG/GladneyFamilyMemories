@@ -38,6 +38,12 @@ class VignetteCreate(VignetteBase):
     photo_ids: Optional[List[int]] = None
 
 
+class VignetteUpdate(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+
 class Vignette(VignetteBase):
     id: int
     author_id: int
@@ -133,6 +139,12 @@ class FileBase(BaseModel):
 
 class FileCreate(FileBase):
     pass
+
+
+class FileUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    created_at: Optional[datetime] = None
 
 
 class File(FileBase):

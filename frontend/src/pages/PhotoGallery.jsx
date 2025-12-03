@@ -3,6 +3,7 @@ import axios from '../config/api'
 import { format } from 'date-fns'
 import { useAuth } from '../context/AuthContext'
 import AuthenticatedImage from '../components/AuthenticatedImage'
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import './PhotoGallery.css'
 
 function PhotoGallery() {
@@ -164,6 +165,56 @@ function PhotoGallery() {
     }
   }
 
+  const handlePhotoDragEnd = async (result) => {
+    if (!result.destination) return
+    if (!user?.is_admin) return
+
+    const items = Array.from(photos)
+    const [reorderedItem] = items.splice(result.source.index, 1)
+    items.splice(result.destination.index, 0, reorderedItem)
+
+    // Optimistically update UI
+    setPhotos(items)
+
+    // Send new order to backend
+    try {
+      const photoOrders = items.map((photo, index) => ({
+        id: photo.id,
+        sort_order: index
+      }))
+      await axios.post('/api/photos/reorder', photoOrders)
+    } catch (error) {
+      console.error('Failed to reorder photos:', error)
+      // Revert on error
+      await fetchPhotos()
+    }
+  }
+
+  const handleAlbumDragEnd = async (result) => {
+    if (!result.destination) return
+    if (!user?.is_admin) return
+
+    const items = Array.from(albums)
+    const [reorderedItem] = items.splice(result.source.index, 1)
+    items.splice(result.destination.index, 0, reorderedItem)
+
+    // Optimistically update UI
+    setAlbums(items)
+
+    // Send new order to backend
+    try {
+      const albumOrders = items.map((album, index) => ({
+        id: album.id,
+        sort_order: index
+      }))
+      await axios.post('/api/albums/reorder', albumOrders)
+    } catch (error) {
+      console.error('Failed to reorder albums:', error)
+      // Revert on error
+      await fetchAlbums()
+    }
+  }
+
   const sortedPhotos = [...photos].sort((a, b) => {
     const dateA = new Date(a.created_at)
     const dateB = new Date(b.created_at)
@@ -188,18 +239,20 @@ function PhotoGallery() {
             A visual journey through your family memories
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
-            + Upload Photos
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handleFileUpload}
-              style={{ display: 'none' }}
-            />
-          </label>
-        </div>
+        {user?.is_admin && (
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
+              + Upload Photos
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleFileUpload}
+                style={{ display: 'none' }}
+              />
+            </label>
+          </div>
+        )}
       </div>
 
       {/* Albums Section */}
@@ -257,30 +310,32 @@ function PhotoGallery() {
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onClick={() => setSelectedPhoto(photo)}
                   />
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleRemovePhotoFromAlbum(photo.id, selectedAlbum.id)
-                    }}
-                    style={{
-                      position: 'absolute',
-                      top: '0.5rem',
-                      right: '0.5rem',
-                      background: 'rgba(220, 53, 69, 0.9)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '50%',
-                      width: '30px',
-                      height: '30px',
-                      cursor: 'pointer',
-                      fontSize: '1.2rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    ×
-                  </button>
+                  {user?.is_admin && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleRemovePhotoFromAlbum(photo.id, selectedAlbum.id)
+                      }}
+                      style={{
+                        position: 'absolute',
+                        top: '0.5rem',
+                        right: '0.5rem',
+                        background: 'rgba(220, 53, 69, 0.9)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '30px',
+                        height: '30px',
+                        cursor: 'pointer',
+                        fontSize: '1.2rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      ×
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -292,9 +347,11 @@ function PhotoGallery() {
           <div style={{ marginBottom: '4rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
               <h2 style={{ fontSize: '2rem', color: 'var(--primary)' }}>Albums ({albums.length})</h2>
-              <button className="btn btn-primary" onClick={() => setShowCreateAlbum(true)}>
-                + Create Album
-              </button>
+              {user?.is_admin && (
+                <button className="btn btn-primary" onClick={() => setShowCreateAlbum(true)}>
+                  + Create Album
+                </button>
+              )}
             </div>
             {albums.length === 0 ? (
               <div className="container" style={{ textAlign: 'center', padding: '2rem', backgroundColor: 'var(--surface)', borderRadius: '12px' }}>
@@ -304,49 +361,75 @@ function PhotoGallery() {
                   marginBottom: '1rem',
                   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
                 }}>
-                  No albums yet. Create your first album to organize your photos!
+                  {user?.is_admin ? 'No albums yet. Create your first album to organize your photos!' : 'No albums available yet.'}
                 </p>
-                <button className="btn btn-primary" onClick={() => setShowCreateAlbum(true)}>
-                  Create Album
-                </button>
+                {user?.is_admin && (
+                  <button className="btn btn-primary" onClick={() => setShowCreateAlbum(true)}>
+                    Create Album
+                  </button>
+                )}
               </div>
             ) : (
-              <div className="grid grid-3">
-                {albums.map((album) => (
-                  <div
-                    key={album.id}
-                    className="card"
-                    style={{
-                      cursor: 'pointer',
-                      backgroundColor: '#bbdefb',
-                      padding: '1rem 1.5rem',
-                      minHeight: 'auto'
-                    }}
-                    onClick={() => handleViewAlbum(album.id)}
-                  >
-                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem', textAlign: 'center' }}>📁</div>
-                    <h3 style={{ marginBottom: '0.5rem', fontSize: '1.1rem' }}>{album.name}</h3>
-                    {album.description && (
-                      <p style={{
-                        color: 'var(--text-secondary)',
-                        fontSize: '0.85rem',
-                        marginBottom: '0.5rem',
-                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
-                      }}>
-                        {album.description}
-                      </p>
-                    )}
-                    <p style={{
-                      color: 'var(--text-muted)',
-                      fontSize: '0.8rem',
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
-                      marginBottom: '0'
-                    }}>
-                      {album.photo_count || 0} {album.photo_count === 1 ? 'photo' : 'photos'}
-                    </p>
-                  </div>
-                ))}
-              </div>
+              <DragDropContext onDragEnd={handleAlbumDragEnd}>
+                <Droppable droppableId="albums" direction="horizontal">
+                  {(provided) => (
+                    <div
+                      className="grid grid-3"
+                      {...provided.droppableProps}
+                      ref={provided.innerRef}
+                    >
+                      {albums.map((album, index) => (
+                        <Draggable
+                          key={album.id}
+                          draggableId={`album-${album.id}`}
+                          index={index}
+                          isDragDisabled={!user?.is_admin}
+                        >
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              className="card"
+                              style={{
+                                ...provided.draggableProps.style,
+                                cursor: user?.is_admin ? 'grab' : 'pointer',
+                                backgroundColor: '#bbdefb',
+                                padding: '1rem 1.5rem',
+                                minHeight: 'auto',
+                                opacity: snapshot.isDragging ? 0.8 : 1
+                              }}
+                              onClick={() => !snapshot.isDragging && handleViewAlbum(album.id)}
+                            >
+                              <div style={{ fontSize: '2rem', marginBottom: '0.5rem', textAlign: 'center' }}>📁</div>
+                              <h3 style={{ marginBottom: '0.5rem', fontSize: '1.1rem' }}>{album.name}</h3>
+                              {album.description && (
+                                <p style={{
+                                  color: 'var(--text-secondary)',
+                                  fontSize: '0.85rem',
+                                  marginBottom: '0.5rem',
+                                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+                                }}>
+                                  {album.description}
+                                </p>
+                              )}
+                              <p style={{
+                                color: 'var(--text-muted)',
+                                fontSize: '0.8rem',
+                                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+                                marginBottom: '0'
+                              }}>
+                                {album.photo_count || 0} {album.photo_count === 1 ? 'photo' : 'photos'}
+                              </p>
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
             )}
           </div>
 
@@ -379,93 +462,121 @@ function PhotoGallery() {
                   marginBottom: '1rem',
                   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
                 }}>
-                  No photos yet. Upload your first photo to start building your family gallery!
+                  {user?.is_admin ? 'No photos yet. Upload your first photo to start building your family gallery!' : 'No photos available yet.'}
                 </p>
-                <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
-                  Upload Photos
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                    style={{ display: 'none' }}
-                  />
-                </label>
+                {user?.is_admin && (
+                  <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
+                    Upload Photos
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+                )}
               </div>
             ) : (
-              <div className={viewMode === 'grid' ? 'photo-grid' : 'photo-chronological'}>
-                {sortedPhotos.map((photo) => (
-                  <div
-                    key={photo.id}
-                    className="photo-item"
-                    style={{ position: 'relative' }}
-                  >
-                    {user?.is_admin && (
-                      <div style={{
-                        position: 'absolute',
-                        top: '0.5rem',
-                        left: '0.5rem',
-                        right: '0.5rem',
-                        display: 'flex',
-                        gap: '0.5rem',
-                        zIndex: 10
-                      }}>
-                        <select
-                          onChange={(e) => {
-                            e.stopPropagation()
-                            const albumId = e.target.value
-                            if (albumId) {
-                              handleAddPhotoToAlbum(photo.id, parseInt(albumId))
-                              e.target.value = ''
-                            }
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                          style={{
-                            flex: 1,
-                            padding: '0.4rem',
-                            fontSize: '0.75rem',
-                            borderRadius: '4px',
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                            border: '1px solid #ccc',
-                            cursor: 'pointer'
-                          }}
+              <DragDropContext onDragEnd={handlePhotoDragEnd}>
+                <Droppable droppableId="photos" direction={viewMode === 'grid' ? 'horizontal' : 'vertical'}>
+                  {(provided) => (
+                    <div
+                      className={viewMode === 'grid' ? 'photo-grid' : 'photo-chronological'}
+                      {...provided.droppableProps}
+                      ref={provided.innerRef}
+                    >
+                      {photos.map((photo, index) => (
+                        <Draggable
+                          key={photo.id}
+                          draggableId={`photo-${photo.id}`}
+                          index={index}
+                          isDragDisabled={!user?.is_admin}
                         >
-                          <option value="">+ Add to Album</option>
-                          {albums.map(album => (
-                            <option key={album.id} value={album.id}>
-                              {album.name}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDeletePhoto(photo.id)
-                          }}
-                          style={{
-                            backgroundColor: 'rgba(220, 53, 69, 0.95)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '3px',
-                            padding: '0.25rem 0.4rem',
-                            fontSize: '0.65rem',
-                            cursor: 'pointer',
-                            fontWeight: '500'
-                          }}
-                        >
-                          Del
-                        </button>
-                      </div>
-                    )}
-                    <AuthenticatedImage
-                      photoId={photo.id}
-                      alt={photo.title || 'Photo'}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
-                      onClick={() => setSelectedPhoto(photo)}
-                    />
-                  </div>
-                ))}
-              </div>
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              className="photo-item"
+                              style={{
+                                ...provided.draggableProps.style,
+                                position: 'relative',
+                                opacity: snapshot.isDragging ? 0.8 : 1
+                              }}
+                            >
+                              {user?.is_admin && (
+                                <div style={{
+                                  position: 'absolute',
+                                  top: '0.5rem',
+                                  left: '0.5rem',
+                                  right: '0.5rem',
+                                  display: 'flex',
+                                  gap: '0.5rem',
+                                  zIndex: 10
+                                }}>
+                                  <select
+                                    onChange={(e) => {
+                                      e.stopPropagation()
+                                      const albumId = e.target.value
+                                      if (albumId) {
+                                        handleAddPhotoToAlbum(photo.id, parseInt(albumId))
+                                        e.target.value = ''
+                                      }
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    style={{
+                                      flex: 1,
+                                      padding: '0.4rem',
+                                      fontSize: '0.75rem',
+                                      borderRadius: '4px',
+                                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                      border: '1px solid #ccc',
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    <option value="">+ Add to Album</option>
+                                    {albums.map(album => (
+                                      <option key={album.id} value={album.id}>
+                                        {album.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleDeletePhoto(photo.id)
+                                    }}
+                                    style={{
+                                      backgroundColor: 'rgba(220, 53, 69, 0.95)',
+                                      color: 'white',
+                                      border: 'none',
+                                      borderRadius: '3px',
+                                      padding: '0.25rem 0.4rem',
+                                      fontSize: '0.65rem',
+                                      cursor: 'pointer',
+                                      fontWeight: '500'
+                                    }}
+                                  >
+                                    Del
+                                  </button>
+                                </div>
+                              )}
+                              <AuthenticatedImage
+                                photoId={photo.id}
+                                alt={photo.title || 'Photo'}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
+                                onClick={() => !snapshot.isDragging && setSelectedPhoto(photo)}
+                              />
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
             )}
           </div>
         </>
