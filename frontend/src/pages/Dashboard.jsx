@@ -65,7 +65,8 @@ function Dashboard() {
         <h1>Lorna and Tom's Reminiscences</h1>
         <p style={{
           fontSize: '1.2rem',
-          color: 'var(--text-secondary)',
+          color: '#6366f1',
+          fontWeight: 'bold',
           marginTop: '-1rem',
           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
         }}>

@@ -330,11 +330,12 @@ function AudioRecordings() {
         <h1>Voice Recordings</h1>
         <p style={{
           fontSize: '1.1rem',
-          color: 'var(--text-secondary)',
+          color: '#6366f1',
+          fontWeight: 'bold',
           marginTop: '-1rem',
           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
         }}>
-          Capture your voice and stories for future generations
+          Assorted audio reminiscences, so you can remember our voices!
         </p>
       </div>
 
