@@ -925,6 +925,32 @@ def delete_photo(
     return {"message": "Photo deleted successfully"}
 
 
+@app.put("/api/photos/{photo_id}", response_model=schemas.Photo)
+def update_photo(
+    photo_id: int,
+    photo_update: schemas.PhotoUpdate,
+    current_admin: models.User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Update photo title and/or description (admin only)"""
+    photo = db.query(models.Photo).filter(
+        models.Photo.id == photo_id
+    ).first()
+
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+
+    # Update only provided fields
+    if photo_update.title is not None:
+        photo.title = photo_update.title
+    if photo_update.description is not None:
+        photo.description = photo_update.description
+
+    db.commit()
+    db.refresh(photo)
+    return photo
+
+
 @app.post("/api/photos/reorder")
 def reorder_photos(
     photo_orders: List[dict],

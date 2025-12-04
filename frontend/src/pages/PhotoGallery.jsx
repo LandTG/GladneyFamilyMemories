@@ -20,6 +20,8 @@ function PhotoGallery() {
   const [showCreateAlbum, setShowCreateAlbum] = useState(false)
   const [newAlbumName, setNewAlbumName] = useState('')
   const [newAlbumDescription, setNewAlbumDescription] = useState('')
+  const [editingPhotoTitle, setEditingPhotoTitle] = useState(false)
+  const [editedTitle, setEditedTitle] = useState('')
 
   useEffect(() => {
     fetchPhotos()
@@ -80,6 +82,25 @@ function PhotoGallery() {
     } catch (error) {
       console.error('Failed to delete photo:', error)
       alert('Failed to delete photo. Please try again.')
+    }
+  }
+
+  const handleUpdatePhotoTitle = async () => {
+    if (!editedTitle.trim()) {
+      alert('Title cannot be empty')
+      return
+    }
+
+    try {
+      await axios.put(`/api/photos/${selectedPhoto.id}`, {
+        title: editedTitle
+      })
+      await fetchPhotos()
+      setSelectedPhoto({ ...selectedPhoto, title: editedTitle })
+      setEditingPhotoTitle(false)
+    } catch (error) {
+      console.error('Failed to update photo title:', error)
+      alert('Failed to update photo title. Please try again.')
     }
   }
 
@@ -587,7 +608,63 @@ function PhotoGallery() {
         <div className="modal" onClick={() => setSelectedPhoto(null)}>
           <div className="modal-content photo-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '1000px' }}>
             <div className="modal-header">
-              <h2 style={{ color: 'var(--primary)' }}>{selectedPhoto.title || 'Photo'}</h2>
+              {editingPhotoTitle ? (
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1 }}>
+                  <input
+                    type="text"
+                    value={editedTitle}
+                    onChange={(e) => setEditedTitle(e.target.value)}
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem',
+                      fontSize: '1.5rem',
+                      border: '2px solid var(--primary)',
+                      borderRadius: '8px',
+                      color: 'var(--text-primary)',
+                      backgroundColor: 'var(--surface)'
+                    }}
+                    autoFocus
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleUpdatePhotoTitle()
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={handleUpdatePhotoTitle}
+                    className="btn btn-primary"
+                    style={{ padding: '0.5rem 1rem' }}
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingPhotoTitle(false)
+                      setEditedTitle('')
+                    }}
+                    className="btn btn-secondary"
+                    style={{ padding: '0.5rem 1rem' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flex: 1 }}>
+                  <h2 style={{ color: 'var(--primary)', margin: 0 }}>{selectedPhoto.title || 'Photo'}</h2>
+                  {user?.is_admin && (
+                    <button
+                      onClick={() => {
+                        setEditingPhotoTitle(true)
+                        setEditedTitle(selectedPhoto.title || '')
+                      }}
+                      className="btn btn-secondary"
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
+              )}
               <button className="close-btn" onClick={() => setSelectedPhoto(null)}>×</button>
             </div>
             <AuthenticatedImage

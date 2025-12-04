@@ -63,6 +63,11 @@ class PhotoCreate(PhotoBase):
     pass
 
 
+class PhotoUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+
+
 class Photo(PhotoBase):
     id: int
     filename: str
