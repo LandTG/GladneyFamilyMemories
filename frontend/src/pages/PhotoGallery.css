@@ -6,10 +6,44 @@
 
 .photo-chronological .photo-item {
   width: 100%;
-  max-width: 600px;
+  max-width: 400px;
   margin: 0 auto;
-  aspect-ratio: 16/9;
-  max-height: 350px;
+  aspect-ratio: 3/4;
+  max-height: 600px;
+}
+
+/* Chronological grid layout - 3-4 photos per row */
+.photo-chronological-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.photo-chronological-grid .photo-item {
+  aspect-ratio: 3/4;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px var(--shadow);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.photo-chronological-grid .photo-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px var(--shadow-md);
+}
+
+/* Smaller grid for admin arrange section */
+.photo-grid-small {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.photo-grid-small .photo-item {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px var(--shadow);
 }
 
 .photo-modal {

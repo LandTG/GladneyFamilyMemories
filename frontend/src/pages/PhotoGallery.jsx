@@ -22,6 +22,8 @@ function PhotoGallery() {
   const [newAlbumDescription, setNewAlbumDescription] = useState('')
   const [editingPhotoTitle, setEditingPhotoTitle] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')
+  const [editingPhotoDate, setEditingPhotoDate] = useState(false)
+  const [editedDate, setEditedDate] = useState('')
 
   useEffect(() => {
     fetchPhotos()
@@ -101,6 +103,29 @@ function PhotoGallery() {
     } catch (error) {
       console.error('Failed to update photo title:', error)
       alert('Failed to update photo title. Please try again.')
+    }
+  }
+
+  const handleUpdatePhotoDate = async () => {
+    if (!editedDate) {
+      alert('Please select a date')
+      return
+    }
+
+    try {
+      // Convert date string to ISO format
+      const dateObj = new Date(editedDate)
+      const isoDate = dateObj.toISOString()
+
+      await axios.put(`/api/photos/${selectedPhoto.id}`, {
+        taken_at: isoDate
+      })
+      await fetchPhotos()
+      setSelectedPhoto({ ...selectedPhoto, taken_at: isoDate })
+      setEditingPhotoDate(false)
+    } catch (error) {
+      console.error('Failed to update photo date:', error)
+      alert('Failed to update photo date. Please try again.')
     }
   }
 
@@ -237,8 +262,9 @@ function PhotoGallery() {
   }
 
   const sortedPhotos = [...photos].sort((a, b) => {
-    const dateA = new Date(a.created_at)
-    const dateB = new Date(b.created_at)
+    // Use taken_at if available, otherwise fall back to created_at (upload date)
+    const dateA = new Date(a.taken_at || a.created_at)
+    const dateB = new Date(b.taken_at || b.created_at)
     return dateB - dateA
   })
 
@@ -455,26 +481,10 @@ function PhotoGallery() {
             )}
           </div>
 
-          {/* All Photos Section - Always show below albums */}
-          <div>
+          {/* Chronological Photos Section - Show first */}
+          <div style={{ marginBottom: '4rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-              <h2 style={{ fontSize: '2rem', color: 'var(--primary)' }}>All Photos ({photos.length})</h2>
-              <select
-                value={viewMode}
-                onChange={(e) => setViewMode(e.target.value)}
-                style={{
-                  padding: '0.75rem 1rem',
-                  borderRadius: '10px',
-                  border: '2px solid var(--border)',
-                  backgroundColor: 'var(--surface)',
-                  color: 'var(--text-primary)',
-                  fontSize: '1rem',
-                  cursor: 'pointer'
-                }}
-              >
-                <option value="grid">Grid View</option>
-                <option value="chronological">Chronological</option>
-              </select>
+              <h2 style={{ fontSize: '2rem', color: 'var(--primary)' }}>Photos by Date ({photos.length})</h2>
             </div>
             {photos.length === 0 ? (
               <div className="container" style={{ textAlign: 'center', padding: '2rem', backgroundColor: 'var(--surface)', borderRadius: '12px' }}>
@@ -500,11 +510,93 @@ function PhotoGallery() {
                 )}
               </div>
             ) : (
+              <div className="photo-chronological-grid">
+                {sortedPhotos.map((photo) => (
+                  <div
+                    key={photo.id}
+                    className="photo-item"
+                    style={{ position: 'relative', cursor: 'pointer' }}
+                  >
+                    {user?.is_admin && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '0.5rem',
+                        left: '0.5rem',
+                        right: '0.5rem',
+                        display: 'flex',
+                        gap: '0.5rem',
+                        zIndex: 10
+                      }}>
+                        <select
+                          onChange={(e) => {
+                            e.stopPropagation()
+                            const albumId = e.target.value
+                            if (albumId) {
+                              handleAddPhotoToAlbum(photo.id, parseInt(albumId))
+                              e.target.value = ''
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            flex: 1,
+                            padding: '0.4rem',
+                            fontSize: '0.75rem',
+                            borderRadius: '4px',
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            border: '1px solid #ccc',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <option value="">+ Add to Album</option>
+                          {albums.map(album => (
+                            <option key={album.id} value={album.id}>
+                              {album.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeletePhoto(photo.id)
+                          }}
+                          style={{
+                            backgroundColor: 'rgba(220, 53, 69, 0.95)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '3px',
+                            padding: '0.25rem 0.4rem',
+                            fontSize: '0.65rem',
+                            cursor: 'pointer',
+                            fontWeight: '500'
+                          }}
+                        >
+                          Del
+                        </button>
+                      </div>
+                    )}
+                    <AuthenticatedImage
+                      photoId={photo.id}
+                      alt={photo.title || 'Photo'}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
+                      onClick={() => setSelectedPhoto(photo)}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Grid View Section - Show second, only for admins */}
+          {user?.is_admin && photos.length > 0 && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                <h2 style={{ fontSize: '2rem', color: 'var(--primary)' }}>Arrange Photos (Admin)</h2>
+              </div>
               <DragDropContext onDragEnd={handlePhotoDragEnd}>
-                <Droppable droppableId="photos" direction={viewMode === 'grid' ? 'horizontal' : 'vertical'}>
+                <Droppable droppableId="photos" direction="horizontal">
                   {(provided) => (
                     <div
-                      className={viewMode === 'grid' ? 'photo-grid' : 'photo-chronological'}
+                      className="photo-grid-small"
                       {...provided.droppableProps}
                       ref={provided.innerRef}
                     >
@@ -599,8 +691,8 @@ function PhotoGallery() {
                   )}
                 </Droppable>
               </DragDropContext>
-            )}
-          </div>
+            </div>
+          )}
         </>
       )}
 
@@ -685,14 +777,73 @@ function PhotoGallery() {
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
               }}>{selectedPhoto.description}</p>
             )}
-            <p style={{
+            <div style={{
               color: 'var(--text-muted)',
               marginTop: '1rem',
               fontSize: '0.9rem',
               fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
             }}>
-              Uploaded: {format(new Date(selectedPhoto.created_at), 'MMMM d, yyyy')}
-            </p>
+              {editingPhotoDate ? (
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <span>Photo taken:</span>
+                  <input
+                    type="date"
+                    value={editedDate}
+                    onChange={(e) => setEditedDate(e.target.value)}
+                    style={{
+                      padding: '0.4rem',
+                      fontSize: '0.9rem',
+                      border: '2px solid var(--primary)',
+                      borderRadius: '6px',
+                      color: 'var(--text-primary)',
+                      backgroundColor: 'var(--surface)'
+                    }}
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleUpdatePhotoDate}
+                    className="btn btn-primary"
+                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingPhotoDate(false)
+                      setEditedDate('')
+                    }}
+                    className="btn btn-secondary"
+                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <p style={{ margin: 0 }}>
+                    Photo taken: {selectedPhoto.taken_at ? format(new Date(selectedPhoto.taken_at), 'MMMM d, yyyy') : 'Not set'}
+                  </p>
+                  {user?.is_admin && (
+                    <button
+                      onClick={() => {
+                        setEditingPhotoDate(true)
+                        const dateStr = selectedPhoto.taken_at
+                          ? new Date(selectedPhoto.taken_at).toISOString().split('T')[0]
+                          : new Date().toISOString().split('T')[0]
+                        setEditedDate(dateStr)
+                      }}
+                      className="btn btn-secondary"
+                      style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
+              )}
+              <p style={{ margin: '0.25rem 0' }}>
+                Uploaded: {format(new Date(selectedPhoto.created_at), 'MMMM d, yyyy')}
+              </p>
+            </div>
             <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
               <div>
                 {albums.length > 0 && (

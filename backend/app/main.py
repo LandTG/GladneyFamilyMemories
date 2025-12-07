@@ -808,15 +808,20 @@ def upload_photo(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    from PIL import Image
+    import io
+    from datetime import datetime
+
     # Get file extension and check if it's HEIC
     file_extension = Path(file.filename).suffix.lower()
     is_heic = file_extension in ['.heic', '.heif']
 
+    # Variable to store extracted photo date
+    photo_taken_at = None
+
     # If HEIC, convert to JPEG
     if is_heic:
         from pillow_heif import register_heif_opener
-        from PIL import Image
-        import io
 
         # Register HEIF opener with Pillow
         register_heif_opener()
@@ -826,6 +831,20 @@ def upload_photo(
 
         # Open with Pillow and convert to JPEG
         img = Image.open(io.BytesIO(file_content))
+
+        # Extract EXIF data before conversion
+        try:
+            exif = img.getexif()
+            if exif:
+                # EXIF tag 36867 is DateTimeOriginal (when photo was taken)
+                # EXIF tag 306 is DateTime (when photo was last modified)
+                date_taken = exif.get(36867) or exif.get(306)
+                if date_taken:
+                    # Parse EXIF date format: "YYYY:MM:DD HH:MM:SS"
+                    photo_taken_at = datetime.strptime(date_taken, "%Y:%m:%d %H:%M:%S")
+                    print(f"[UPLOAD PHOTO] Extracted EXIF date: {photo_taken_at}")
+        except Exception as e:
+            print(f"[UPLOAD PHOTO] Could not extract EXIF date: {str(e)}")
 
         # Convert to RGB if necessary (HEIC can have different color modes)
         if img.mode not in ('RGB', 'L'):
@@ -843,8 +862,27 @@ def upload_photo(
         unique_filename = f"{uuid.uuid4()}{file_extension}"
         file_path = UPLOAD_DIR / "photos" / unique_filename
 
+        # Read file content to extract EXIF
+        file_content = file.file.read()
+
+        # Try to extract EXIF data from the image
+        try:
+            img = Image.open(io.BytesIO(file_content))
+            exif = img.getexif()
+            if exif:
+                # EXIF tag 36867 is DateTimeOriginal (when photo was taken)
+                # EXIF tag 306 is DateTime (when photo was last modified)
+                date_taken = exif.get(36867) or exif.get(306)
+                if date_taken:
+                    # Parse EXIF date format: "YYYY:MM:DD HH:MM:SS"
+                    photo_taken_at = datetime.strptime(date_taken, "%Y:%m:%d %H:%M:%S")
+                    print(f"[UPLOAD PHOTO] Extracted EXIF date: {photo_taken_at}")
+        except Exception as e:
+            print(f"[UPLOAD PHOTO] Could not extract EXIF date: {str(e)}")
+
+        # Write file to disk
         with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+            buffer.write(file_content)
 
     # Create database record
     db_photo = models.Photo(
@@ -853,6 +891,7 @@ def upload_photo(
         title=title or file.filename,
         description=description,
         uploaded_by_id=current_user.id,
+        taken_at=photo_taken_at,
     )
     db.add(db_photo)
     db.commit()
@@ -932,7 +971,7 @@ def update_photo(
     current_admin: models.User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    """Update photo title and/or description (admin only)"""
+    """Update photo title, description, and/or taken_at date (admin only)"""
     photo = db.query(models.Photo).filter(
         models.Photo.id == photo_id
     ).first()
@@ -945,6 +984,8 @@ def update_photo(
         photo.title = photo_update.title
     if photo_update.description is not None:
         photo.description = photo_update.description
+    if photo_update.taken_at is not None:
+        photo.taken_at = photo_update.taken_at
 
     db.commit()
     db.refresh(photo)

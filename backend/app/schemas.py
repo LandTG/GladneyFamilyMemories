@@ -66,6 +66,7 @@ class PhotoCreate(PhotoBase):
 class PhotoUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
+    taken_at: Optional[datetime] = None
 
 
 class Photo(PhotoBase):
