@@ -26,11 +26,15 @@ function Dashboard() {
         axios.get('/api/files'),
       ])
 
+      // Count vignettes + files with source='vignettes' for the Vignettes page total
+      const vignetteFiles = filesRes.data.filter(file => file.source === 'vignettes')
+      const miscFiles = filesRes.data.filter(file => file.source === 'files')
+
       setStats({
-        vignettes: vignettesRes.data.length,
+        vignettes: vignettesRes.data.length + vignetteFiles.length,
         photos: photosRes.data.length,
         audio: audioRes.data.length,
-        files: filesRes.data.length,
+        files: miscFiles.length,
       })
 
       // Combine all recent items with their type
