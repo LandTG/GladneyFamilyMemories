@@ -94,6 +94,7 @@ class Album(AlbumBase):
     created_by_id: int
     created_at: datetime
     photo_count: Optional[int] = 0
+    background_image: Optional[str] = None
 
     class Config:
         from_attributes = True

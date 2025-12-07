@@ -91,6 +91,7 @@ class Album(Base):
     description = Column(Text)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     sort_order = Column(Integer, default=0, index=True)
+    background_image = Column(String, nullable=True)  # Path to background image
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     photos = relationship("AlbumPhoto", back_populates="album")

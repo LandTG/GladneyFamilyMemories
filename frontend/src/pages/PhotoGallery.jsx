@@ -261,6 +261,24 @@ function PhotoGallery() {
     }
   }
 
+  const handleUploadAlbumBackground = async (albumId, e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      await axios.post(`/api/albums/${albumId}/background`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      await fetchAlbums() // Refresh to show new background
+    } catch (error) {
+      console.error('Failed to upload album background:', error)
+      alert('Failed to upload background image. Please try again.')
+    }
+  }
+
   const sortedPhotos = [...photos].sort((a, b) => {
     // Use taken_at if available, otherwise fall back to created_at (upload date)
     const dateA = new Date(a.taken_at || a.created_at)
@@ -446,33 +464,81 @@ function PhotoGallery() {
                               style={{
                                 ...provided.draggableProps.style,
                                 cursor: user?.is_admin ? 'grab' : 'pointer',
-                                backgroundColor: '#bbdefb',
+                                backgroundColor: album.background_image ? 'transparent' : '#bbdefb',
+                                backgroundImage: album.background_image ? `url(${album.background_image})` : 'none',
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
                                 padding: '1rem 1.5rem',
                                 minHeight: 'auto',
-                                opacity: snapshot.isDragging ? 0.8 : 1
+                                opacity: snapshot.isDragging ? 0.8 : 1,
+                                position: 'relative'
                               }}
                               onClick={() => !snapshot.isDragging && handleViewAlbum(album.id)}
                             >
-                              <div style={{ fontSize: '2rem', marginBottom: '0.5rem', textAlign: 'center' }}>📁</div>
-                              <h3 style={{ marginBottom: '0.5rem', fontSize: '1.1rem' }}>{album.name}</h3>
-                              {album.description && (
-                                <p style={{
-                                  color: 'var(--text-secondary)',
-                                  fontSize: '0.85rem',
-                                  marginBottom: '0.5rem',
-                                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
-                                }}>
-                                  {album.description}
-                                </p>
+                              {album.background_image && (
+                                <div style={{
+                                  position: 'absolute',
+                                  top: 0,
+                                  left: 0,
+                                  right: 0,
+                                  bottom: 0,
+                                  backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                                  borderRadius: '12px',
+                                  zIndex: 0
+                                }}></div>
                               )}
-                              <p style={{
-                                color: 'var(--text-muted)',
-                                fontSize: '0.8rem',
-                                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
-                                marginBottom: '0'
-                              }}>
-                                {album.photo_count || 0} {album.photo_count === 1 ? 'photo' : 'photos'}
-                              </p>
+                              <div style={{ position: 'relative', zIndex: 1 }}>
+                                {user?.is_admin && (
+                                  <label
+                                    style={{
+                                      position: 'absolute',
+                                      top: '-0.5rem',
+                                      right: '-0.5rem',
+                                      backgroundColor: 'var(--primary)',
+                                      color: 'white',
+                                      borderRadius: '50%',
+                                      width: '2rem',
+                                      height: '2rem',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      cursor: 'pointer',
+                                      fontSize: '0.9rem',
+                                      zIndex: 10
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    🖼️
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      style={{ display: 'none' }}
+                                      onChange={(e) => handleUploadAlbumBackground(album.id, e)}
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                  </label>
+                                )}
+                                <div style={{ fontSize: '2rem', marginBottom: '0.5rem', textAlign: 'center' }}>📁</div>
+                                <h3 style={{ marginBottom: '0.5rem', fontSize: '1.1rem' }}>{album.name}</h3>
+                                {album.description && (
+                                  <p style={{
+                                    color: 'var(--text-secondary)',
+                                    fontSize: '0.85rem',
+                                    marginBottom: '0.5rem',
+                                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+                                  }}>
+                                    {album.description}
+                                  </p>
+                                )}
+                                <p style={{
+                                  color: 'var(--text-muted)',
+                                  fontSize: '0.8rem',
+                                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+                                  marginBottom: '0'
+                                }}>
+                                  {album.photo_count || 0} {album.photo_count === 1 ? 'photo' : 'photos'}
+                                </p>
+                              </div>
                             </div>
                           )}
                         </Draggable>

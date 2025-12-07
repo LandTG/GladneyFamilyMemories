@@ -340,9 +340,9 @@ function AudioRecordings() {
       </div>
 
       {user?.is_admin && (
-        <div style={{ display: 'flex', gap: '2rem', marginBottom: '3rem', flexWrap: 'wrap' }}>
-          <div className="container" style={{ flex: '1 1 400px', maxWidth: '500px' }}>
-            <h2 style={{ marginBottom: '1.5rem' }}>Record New Audio</h2>
+        <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '3rem', flexWrap: 'wrap' }}>
+          <div className="card" style={{ flex: '1 1 300px', maxWidth: '400px', padding: '1rem' }}>
+            <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Record New Audio</h3>
             <div className="recording-controls">
             {!isRecording && !audioBlob && (
               <button onClick={startRecording} className="btn btn-primary">
@@ -454,12 +454,12 @@ function AudioRecordings() {
           </div>
         </div>
 
-        <div className="container" style={{ flex: '1 1 400px', maxWidth: '500px' }}>
-          <h2 style={{ marginBottom: '1.5rem' }}>Upload Audio File</h2>
+        <div className="card" style={{ flex: '1 1 300px', maxWidth: '400px', padding: '1rem' }}>
+          <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Upload Audio File</h3>
           <p style={{
-            fontSize: '0.95rem',
+            fontSize: '0.9rem',
             color: 'var(--text-secondary)',
-            marginBottom: '1.5rem',
+            marginBottom: '1rem',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
           }}>
             Upload an existing audio file from your device

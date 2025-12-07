@@ -440,8 +440,8 @@ function Vignettes() {
         <div className="grid grid-3">
           {sortedItems.map((item) => (
             <div key={`${item.itemType}-${item.id}`} className="card" style={{ textAlign: item.itemType === 'file' ? 'center' : 'left' }}>
-              {/* Badge to show type */}
-              {user?.is_admin && (
+              {/* Badge to show type - only for vignettes */}
+              {user?.is_admin && item.itemType === 'vignette' && (
                 <div style={{
                   display: 'inline-block',
                   padding: '0.25rem 0.75rem',
@@ -449,10 +449,10 @@ function Vignettes() {
                   fontSize: '0.75rem',
                   fontWeight: '600',
                   marginBottom: '0.75rem',
-                  backgroundColor: item.itemType === 'vignette' ? '#e3f2fd' : '#fff3e0',
-                  color: item.itemType === 'vignette' ? '#1976d2' : '#f57c00'
+                  backgroundColor: '#e3f2fd',
+                  color: '#1976d2'
                 }}>
-                  {item.itemType === 'vignette' ? '📖 Vignette' : `${getFileIcon(item.file_type)} File`}
+                  📖 Vignette
                 </div>
               )}
 
@@ -654,11 +654,6 @@ function Vignettes() {
               ) : (
                 // File View Mode
                 <>
-                  {user?.is_admin && (
-                    <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>
-                      {getFileIcon(item.file_type)}
-                    </div>
-                  )}
                   <h3 style={{ marginBottom: '0.75rem', fontSize: '1.25rem' }}>{item.title || item.filename}</h3>
                   <p style={{
                     color: 'var(--text-muted)',

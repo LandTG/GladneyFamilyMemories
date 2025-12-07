@@ -1231,6 +1231,52 @@ def reorder_albums(
         raise HTTPException(status_code=400, detail=f"Failed to reorder albums: {str(e)}")
 
 
+@app.post("/api/albums/{album_id}/background")
+def upload_album_background(
+    album_id: int,
+    file: UploadFile = File(...),
+    current_admin: models.User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Upload a background image for an album (admin only)"""
+    # Get the album
+    album = db.query(models.Album).filter(models.Album.id == album_id).first()
+    if not album:
+        raise HTTPException(status_code=404, detail="Album not found")
+
+    # Validate file is an image
+    if not file.content_type or not file.content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="File must be an image")
+
+    # Generate unique filename
+    file_extension = Path(file.filename).suffix or '.jpg'
+    unique_filename = f"album_bg_{uuid.uuid4()}{file_extension}"
+    file_path = UPLOAD_DIR / "albums" / unique_filename
+
+    # Create albums directory if it doesn't exist
+    (UPLOAD_DIR / "albums").mkdir(parents=True, exist_ok=True)
+
+    # Save the file
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
+
+    # Delete old background image if it exists
+    if album.background_image:
+        old_path = Path(album.background_image)
+        if old_path.exists():
+            old_path.unlink()
+
+    # Update album with new background image path
+    album.background_image = str(file_path)
+    db.commit()
+    db.refresh(album)
+
+    return {"message": "Background uploaded successfully", "background_image": str(file_path)}
+
+
 # Audio recording routes
 @app.post("/api/audio", response_model=schemas.AudioRecording)
 def upload_audio(
