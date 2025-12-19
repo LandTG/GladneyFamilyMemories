@@ -521,6 +521,36 @@ def get_me(current_user: models.User = Depends(get_current_user)):
     return current_user
 
 
+@app.post("/api/auth/change-password")
+def change_password(
+    password_data: schemas.PasswordChange,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Change the current user's password"""
+    from app.auth import verify_password, get_password_hash
+
+    # Verify current password
+    if not verify_password(password_data.current_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=400,
+            detail="Current password is incorrect"
+        )
+
+    # Validate new password
+    if len(password_data.new_password) < 4:
+        raise HTTPException(
+            status_code=400,
+            detail="New password must be at least 4 characters long"
+        )
+
+    # Update password
+    current_user.hashed_password = get_password_hash(password_data.new_password)
+    db.commit()
+
+    return {"message": "Password changed successfully"}
+
+
 @app.get("/api/auth/health")
 def auth_health(db: Session = Depends(get_db)):
     """Health check endpoint to verify database and user count"""

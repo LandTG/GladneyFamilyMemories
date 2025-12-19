@@ -32,6 +32,9 @@ function Navbar() {
             </div>
             <div className="navbar-user">
               <span>Welcome, {user.full_name || user.username}</span>
+              <Link to="/change-password" className="btn btn-secondary">
+                Change Password
+              </Link>
               <button onClick={handleLogout} className="btn btn-secondary">
                 Logout
               </button>

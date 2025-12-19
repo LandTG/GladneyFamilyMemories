@@ -227,6 +227,12 @@ class BackgroundImage(BaseModel):
         from_attributes = True
 
 
+class PasswordChange(BaseModel):
+    """Schema for changing user password"""
+    current_password: str
+    new_password: str
+
+
 # Update forward references
 Vignette.model_rebuild()
 AlbumWithPhotos.model_rebuild()
