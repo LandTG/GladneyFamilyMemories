@@ -5,7 +5,9 @@ services:
     env: python
     region: oregon
     plan: free
-    buildCommand: "pip install -r backend/requirements.txt"
+    # Ensure pip runs from the backend directory (Render runs build from repo root)
+    buildCommand: "cd backend && pip install -r requirements.txt"
+    # Start the backend from the backend directory so imports and relative paths work
     startCommand: "cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: SECRET_KEY
@@ -14,6 +16,8 @@ services:
         value: sqlite:///./tag_diary.db
       - key: PYTHON_VERSION
         value: 3.11.0
+    # Add a simple health check path so Render can validate the service is up
+    healthCheckPath: "/api/auth/health"
     disk:
       name: data
       mountPath: /opt/render/project/src/backend
