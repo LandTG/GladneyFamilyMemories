@@ -161,11 +161,18 @@ function VignetteModal({ vignette, editing, onClose, onSave }) {
                       overflow: 'hidden',
                       boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                     }}>
-                      <AuthenticatedImage
-                        photoId={photo.id}
-                        alt={photo.title || 'Photo'}
-                        style={{ width: '100%', height: '150px', objectFit: 'cover' }}
-                      />
+                          <div style={{
+                            width: '100%',
+                            height: '150px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: '#f5f5f5',
+                            color: '#777',
+                            fontSize: '2rem'
+                          }}>
+                            🖼️
+                          </div>
                       {photo.title && (
                         <p style={{
                           padding: '0.5rem',

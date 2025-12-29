@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import axios from '../config/api'
 
-function AuthenticatedImage({ photoId, alt, className, style, ...props }) {
+function AuthenticatedImage({ photoId, alt, className, style, showImage = true, ...props }) {
   const [imageUrl, setImageUrl] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -67,6 +67,27 @@ function AuthenticatedImage({ photoId, alt, className, style, ...props }) {
         }}
       >
         Loading...
+      </div>
+    )
+  }
+
+  // Allow callers to request a non-image placeholder for use in compact cards
+  if (!showImage) {
+    return (
+      <div
+        className={className}
+        style={{
+          ...style,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'var(--background)',
+          color: 'var(--text-muted)',
+          fontSize: '2.25rem'
+        }}
+        {...props}
+      >
+        🖼️
       </div>
     )
   }
