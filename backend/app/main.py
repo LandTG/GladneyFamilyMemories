@@ -1580,10 +1580,12 @@ def upload_file(
     file: UploadFile = File(...),
     title: Optional[str] = Form(None),
     description: Optional[str] = Form(None),
-    source: Optional[str] = Form("vignettes"),
+    # Default to 'files' to avoid accidentally tagging uploads as vignette assets
+    source: Optional[str] = Form("files"),
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    print(f"[UPLOAD FILE] User: {current_user.username} uploading file: {file.filename} with source: {source}")
     file_extension = Path(file.filename).suffix
     unique_filename = f"{uuid.uuid4()}{file_extension}"
     file_path = UPLOAD_DIR / "files" / unique_filename
