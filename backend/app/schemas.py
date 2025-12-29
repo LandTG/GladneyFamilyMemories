@@ -175,6 +175,7 @@ class BulkFileUpdate(BaseModel):
     created_before: Optional[datetime] = None
     created_after: Optional[datetime] = None
     limit: Optional[int] = 100
+    dry_run: Optional[bool] = False
 
 
 class PasswordResetRequest(BaseModel):

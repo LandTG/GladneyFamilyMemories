@@ -1728,6 +1728,12 @@ def admin_bulk_set_file_source(
     if not files:
         return {"updated": 0, "ids": []}
 
+    matched_ids = [f.id for f in files]
+
+    # If dry_run, return matched ids without applying changes
+    if body.dry_run:
+        return {"matched": len(matched_ids), "ids": matched_ids, "dry_run": True}
+
     updated_ids = []
     for f in files:
         old = f.source
