@@ -1671,6 +1671,76 @@ def admin_set_file_source(
     }
 
 
+@app.post("/api/admin/files/bulk-set-source")
+def admin_bulk_set_file_source(
+    payload: dict,
+    current_admin: models.User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Admin-only: bulk update file `source` field using ids or criteria.
+
+    Payload fields (JSON):
+      - file_ids: [1,2,3] (optional)
+      - uploaded_by_username: str (optional)
+      - current_source: str (optional)
+      - new_source: str (required)
+      - created_before: ISO datetime string (optional)
+      - created_after: ISO datetime string (optional)
+      - limit: int (optional)
+    """
+    from app.schemas import BulkFileUpdate
+    from pydantic import ValidationError
+    try:
+        body = BulkFileUpdate.model_validate(payload)
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    if not body.new_source:
+        raise HTTPException(status_code=400, detail="new_source is required")
+
+    query = db.query(models.File)
+
+    # If file_ids provided, use those directly
+    if body.file_ids:
+        query = query.filter(models.File.id.in_(body.file_ids))
+    else:
+        # optional filters
+        if body.uploaded_by_username:
+            user = db.query(models.User).filter(models.User.username == body.uploaded_by_username).first()
+            if not user:
+                return {"updated": 0, "ids": [], "message": "No such uploader username"}
+            query = query.filter(models.File.uploaded_by_id == user.id)
+
+        if body.current_source:
+            query = query.filter(models.File.source == body.current_source)
+
+        if body.created_before:
+            query = query.filter(models.File.created_at < body.created_before)
+
+        if body.created_after:
+            query = query.filter(models.File.created_at > body.created_after)
+
+    if body.limit:
+        query = query.limit(body.limit)
+
+    files = query.all()
+
+    if not files:
+        return {"updated": 0, "ids": []}
+
+    updated_ids = []
+    for f in files:
+        old = f.source
+        f.source = body.new_source
+        updated_ids.append(f.id)
+
+    db.commit()
+
+    print(f"[BULK SET SOURCE] Admin {current_admin.username} set source => '{body.new_source}' for files: {updated_ids}")
+
+    return {"updated": len(updated_ids), "ids": updated_ids}
+
+
 @app.get("/api/files/{file_id}")
 def get_file(
     file_id: int,

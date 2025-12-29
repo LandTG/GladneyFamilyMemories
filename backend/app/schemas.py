@@ -166,6 +166,17 @@ class File(FileBase):
         from_attributes = True
 
 
+class BulkFileUpdate(BaseModel):
+    """Schema for bulk updating file records."""
+    file_ids: Optional[List[int]] = None
+    uploaded_by_username: Optional[str] = None
+    current_source: Optional[str] = None
+    new_source: str
+    created_before: Optional[datetime] = None
+    created_after: Optional[datetime] = None
+    limit: Optional[int] = 100
+
+
 class PasswordResetRequest(BaseModel):
     email: EmailStr
 
