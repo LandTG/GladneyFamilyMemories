@@ -40,7 +40,8 @@ function Vignettes() {
 
   const fetchFiles = async () => {
     try {
-      const response = await axios.get('/api/files')
+      // Only fetch files that are associated with vignettes
+      const response = await axios.get('/api/files?source=vignettes')
       setFiles(response.data)
     } catch (error) {
       console.error('Failed to fetch files:', error)
