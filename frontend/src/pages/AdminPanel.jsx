@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axios from '../config/api'
 import { useAuth } from '../context/AuthContext'
 import './AdminPanel.css'
 
 function AdminPanel() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [inviteCodes, setInviteCodes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -366,7 +368,15 @@ function AdminPanel() {
                     </p>
                   </div>
 
-                  {user && registeredUser.id !== user.id && (
+                  {user && registeredUser.id === user.id ? (
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => navigate('/change-password')}
+                      style={{ width: '100%', padding: '0.5rem', fontSize: '0.9rem' }}
+                    >
+                      Change Password
+                    </button>
+                  ) : (
                     <button
                       className="btn btn-danger"
                       onClick={() => deleteUser(registeredUser.id, registeredUser.username)}
@@ -391,16 +401,19 @@ function AdminPanel() {
                   <strong>Current Background:</strong> Active
                 </p>
                 <div style={{ marginBottom: '1rem' }}>
-                  <img
-                    src={backgroundImage.url}
-                    alt="Current background"
-                    style={{
-                      maxWidth: '150px',
-                      maxHeight: '100px',
-                      borderRadius: '8px',
-                      objectFit: 'cover'
-                    }}
-                  />
+                  <div style={{
+                    width: '150px',
+                    height: '100px',
+                    borderRadius: '8px',
+                    backgroundColor: '#f5f5f5',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#777',
+                    fontSize: '1.5rem'
+                  }}>
+                    🖼️
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <label className="btn btn-primary btn-sm" style={{ cursor: 'pointer', padding: '0.25rem 0.5rem', fontSize: '0.85rem' }}>

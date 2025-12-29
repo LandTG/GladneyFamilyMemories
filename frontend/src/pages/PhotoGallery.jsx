@@ -648,6 +648,7 @@ function PhotoGallery() {
                     <AuthenticatedImage
                       photoId={photo.id}
                       alt={photo.title || 'Photo'}
+                      showImage={false}
                       style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
                       onClick={() => setSelectedPhoto(photo)}
                     />
@@ -750,6 +751,7 @@ function PhotoGallery() {
                               <AuthenticatedImage
                                 photoId={photo.id}
                                 alt={photo.title || 'Photo'}
+                                showImage={false}
                                 style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
                                 onClick={() => !snapshot.isDragging && setSelectedPhoto(photo)}
                               />
