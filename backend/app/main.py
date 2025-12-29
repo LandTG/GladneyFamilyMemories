@@ -1646,6 +1646,31 @@ def admin_recent_files(
     return result
 
 
+@app.post("/api/admin/files/{file_id}/set-source")
+def admin_set_file_source(
+    file_id: int,
+    source: str = Form(...),
+    current_admin: models.User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Admin-only: set the source field for a file (e.g., 'files' or 'vignettes')"""
+    file = db.query(models.File).filter(models.File.id == file_id).first()
+    if not file:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    old = file.source
+    file.source = source
+    db.commit()
+    db.refresh(file)
+
+    return {
+        "id": file.id,
+        "filename": file.filename,
+        "old_source": old,
+        "new_source": file.source,
+    }
+
+
 @app.get("/api/files/{file_id}")
 def get_file(
     file_id: int,
