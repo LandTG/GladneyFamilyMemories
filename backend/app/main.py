@@ -1622,6 +1622,30 @@ def get_files(
     return files
 
 
+@app.get("/api/admin/recent-files")
+def admin_recent_files(
+    limit: int = 10,
+    current_admin: models.User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Admin-only: return recent files including source and uploader username"""
+    files = db.query(models.File).order_by(models.File.created_at.desc()).limit(limit).all()
+    result = []
+    for f in files:
+        uploader = db.query(models.User).filter(models.User.id == f.uploaded_by_id).first()
+        result.append({
+            "id": f.id,
+            "title": f.title,
+            "filename": f.filename,
+            "source": f.source,
+            "file_type": f.file_type,
+            "uploaded_by_id": f.uploaded_by_id,
+            "uploaded_by_username": uploader.username if uploader else None,
+            "created_at": f.created_at.isoformat() if f.created_at else None,
+        })
+    return result
+
+
 @app.get("/api/files/{file_id}")
 def get_file(
     file_id: int,
